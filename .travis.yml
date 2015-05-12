@@ -4,7 +4,7 @@ python:
 
 install:
     - sudo apt-get build-dep --ignore-missing -y python-scipy
-    - pip install -r requirements_1.txt
+    - travis_wait pip install -r requirements_1.txt
     # tables has some dependencies which must be installed first:
     - pip install -r requirements_2.txt
     - wget -O models/en-default.pyrnn.gz http://www.tmbdev.net/en-default.pyrnn.gz
