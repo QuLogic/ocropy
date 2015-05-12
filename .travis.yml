@@ -2,9 +2,8 @@ language: python
 python:
     - "2.7"
 
-sudo: false
-
 install:
+    - sudo apt-get build-dep --ignore-missing -y python-scipy
     - pip install -r requirements_1.txt
     # tables has some dependencies which must be installed first:
     - pip install -r requirements_2.txt
