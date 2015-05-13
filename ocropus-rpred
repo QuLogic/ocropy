@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import traceback
 import codecs
 from pylab import *
@@ -84,13 +86,13 @@ if len(args.files)<1:
     parser.print_help()
     sys.exit(0)
 
-print 
-print "#"*10,(" ".join(sys.argv))[:60]
-print 
+print()
+print("#" * 10, (" ".join(sys.argv))[:60])
+print()
 
 
 inputs = ocrolib.glob_all(args.files)
-if not args.quiet: print "#inputs",len(inputs)
+if not args.quiet: print("#inputs", len(inputs))
 
 # disable parallelism when anything is being displayed
 
@@ -106,11 +108,11 @@ try:
       if isinstance(x,lstm.LSTM):
           x.allocate(5000)
 except ocrolib.FileNotFound:
-  print
-  print "Cannot find OCR model file:",args.model
-  print "Download a model and put it into:",ocrolib.default.modeldir
-  print "(Or override the location with OCROPUS_DATA.)"
-  print
+  print()
+  print("Cannot find OCR model file:", args.model)
+  print("Download a model and put it into:", ocrolib.default.modeldir)
+  print("(Or override the location with OCROPUS_DATA.)")
+  print()
   sys.exit(1)
 
 # get the line normalizer from the loaded network, or optionally
@@ -134,7 +136,7 @@ def process1(arg):
     if not args.nocheck:
         check = check_line(amax(line)-line)
         if check is not None:
-            print fname,"SKIPPED",check,"(use -n to disable this check)"
+            print(fname, "SKIPPED", check, "(use -n to disable this check)")
             return (0,[],0,trial,fname)            
 
     if not args.nolineest:
@@ -192,12 +194,12 @@ def process1(arg):
             err = edist.xlevenshtein(pred0,gt0)
             conf = []
         if not args.quiet:
-            print "%3d %3d"%(err,len(gt)),fname,":",pred
+            print("%3d %3d" % (err, len(gt)), fname, ":", pred)
             sys.stdout.flush()
         return (err,conf,len(gt0),trial,fname)
 
     if not args.quiet:
-        print fname,":",pred
+        print(fname, ":", pred)
     ocrolib.write_text(base+".txt",pred)
 
     if args.show>0 or args.save is not None:
@@ -231,7 +233,7 @@ def process1(arg):
             draw()
             savename = args.save
             if "%" in savename: savename = savename%trial
-            print "saving",savename
+            print("saving", savename)
             savefig(savename,bbox_inches=0)
         if trial==len(inputs)-1:
             ginput(1,99999999)
@@ -245,10 +247,10 @@ def safe_process1(arg):
         return process1(arg)
     except IOError as e:
         if ocrolib.trace: traceback.print_exc()
-        print fname,":",e
+        print(fname, ":", e)
     except ocrolib.OcropusException as e:
         if e.trace: traceback.print_exc()
-        print fname,":",e
+        print(fname, ":", e)
     except:
         traceback.print_exc()
         return None
@@ -280,8 +282,9 @@ if args.estrate:
         terr += err
         total += n
         confusions += conf
-    print "%.5f"%(terr*1.0/total),terr,total,args.model
+    print("%.5f" % (terr * 1.0 / total), terr, total, args.model)
     if args.estconf>0:
-        print "top",args.estconf,"confusions (count pred gt), comparison:",args.compare
+        print("top", args.estconf, "confusions (count pred gt), comparison:",
+              args.compare)
         for ((u,v),n) in Counter(confusions).most_common(args.estconf):
-            print "%6d %-4s %-4s"%(n,u,v)
+            print("%6d %-4s %-4s" % (n, u, v))
