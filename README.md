@@ -3,6 +3,7 @@ Note: The text line recognizer has been ported to C++ and is now a separate proj
 ocropy
 ======
 
+[![Build Status](https://travis-ci.org/tmbdev/ocropy.svg)](https://travis-ci.org/tmbdev/ocropy)
 [![Join the chat at https://gitter.im/tmbdev/ocropy](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/tmbdev/ocropy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Python-based OCR package using recurrent neural networks.
