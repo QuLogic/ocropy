@@ -1,0 +1,4 @@
+# Requirements for PyTables so that it can build.
+# Not required for this package.
+numpy>=1.7.1
+Cython>=0.14
