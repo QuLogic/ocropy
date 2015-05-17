@@ -1,8 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
-from pylab import *
 from collections import defaultdict
 from itertools import chain
+import math as M
 
 class Edge:
     def __init__(self,**kw):
@@ -38,8 +38,8 @@ class Lattice:
                     st_extra = 2*last+1
                     st_next = 2*last+2
                     ws,nows = [float(x) for x in f[4:6]]
-                    ws = minimum(ws,self.maxws)
-                    nows = minimum(nows,self.maxws)
+                    ws = min(ws, self.maxws)
+                    nows = min(nows, self.maxws)
                     if self.edges[st_extra]==[]:
                         # skip or replace
                         self.addEdge(start=st_start,stop=st_extra,cost=self.mismatch,cls="")
@@ -50,7 +50,7 @@ class Lattice:
                         # insert arbitrary (this implies "no space")
                         self.addEdge(start=st_extra,stop=st_next,cost=self.mismatch,cls="~")
                 elif f[0]=="chr":
-                    cost = minimum(float(f[3])+nows,self.maxcost)
+                    cost = min(float(f[3]) + nows, self.maxcost)
                     if len(f)<5: f += [""]
                     self.addEdge(start=st_start,stop=st_extra,cost=cost+nows,cls=f[4],seg=(first,last))
         return self
@@ -92,14 +92,14 @@ class Lattice2:
                     first,last = [int(x) for x in f[2].split(":")]
                     st_start = first
                     st_next = last+1
-                    nows,ws = [-log(1e-6+float(x)) for x in f[4:6]]
-                    ws = minimum(ws*self.wsfactor,self.maxws)
-                    nows = minimum(nows*self.wsfactor,self.maxws)
+                    nows,ws = [-M.log(1e-6 + float(x)) for x in f[4:6]]
+                    ws = min(ws * self.wsfactor, self.maxws)
+                    nows = min(nows * self.wsfactor, self.maxws)
                     self.addEdge(start=st_start,stop=st_next,cost=self.mismatch,cls="")
                     self.addEdge(start=st_start,stop=st_next,cost=self.mismatch,cls="~")
                 elif f[0]=="chr":
                     if len(f)<5: f += [""]
-                    cost = minimum(float(f[3]),self.maxcost)
+                    cost = min(float(f[3]), self.maxcost)
                     self.addEdge(start=st_start,stop=st_next,cost=cost+nows,cls=f[4],seg=(first,last))
                     self.addEdge(start=st_start,stop=st_next,cost=cost+ws,cls=f[4]+" ",seg=(first,last))
         return self

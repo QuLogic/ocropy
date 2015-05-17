@@ -8,12 +8,12 @@ from pylab import *
 import ocrolib
 import argparse
 import matplotlib
-import numpy
+import numpy as np
 from ocrolib import lineest
 import ocrolib.lstm as lstm
 import traceback
 
-numpy.seterr(divide='raise',over='raise',invalid='raise',under='ignore')
+np.seterr(divide='raise', over='raise', invalid='raise', under='ignore')
 
 parser = argparse.ArgumentParser("train an RNN recognizer")
 
@@ -230,15 +230,17 @@ def plot_network_info(network,transcript,pred,gta):
     subplot(514)
     plot(network.outputs[:,0],color='yellow',linewidth=3,alpha=0.5)
     plot(network.outputs[:,1],color='green',linewidth=3,alpha=0.5)
-    plot(amax(network.outputs[:,2:],axis=1),color='blue',linewidth=3,alpha=0.5)
+    plot(np.amax(network.outputs[:, 2:], axis=1),
+         color='blue', linewidth=3, alpha=0.5)
     plot(network.aligned[:,0],color='orange',linestyle='dashed',alpha=0.7)
     plot(network.aligned[:,1],color='green',linestyle='dashed',alpha=0.5)
-    plot(amax(network.aligned[:,2:],axis=1),color='blue',linestyle='dashed',alpha=0.5)
+    plot(np.amax(network.aligned[:, 2:], axis=1),
+         color='blue', linestyle='dashed', alpha=0.5)
     subplot(515)
     gca().set_yscale('log')
     r = 10000
     errs = network.errors(range=r,smooth=100)
-    xs = arange(len(errs))+network.last_trial-len(errs)
+    xs = np.arange(len(errs)) + network.last_trial - len(errs)
     plot(xs,errs,color='black')
     plot(xs,network.errors(range=r),color='black',alpha=0.4)
     plot(xs,network.cerrors(range=r,smooth=100),color='red',linestyle='dashed')
@@ -267,21 +269,22 @@ for trial in range(start,args.ntrain):
 
     if not args.nolineest:
         assert "dew.png" not in fname,"don't dewarp already dewarped lines"
-        network.lnorm.measure(amax(line)-line)
-        line = network.lnorm.normalize(line,cval=amax(line))
+        network.lnorm.measure(np.amax(line) - line)
+        line = network.lnorm.normalize(line, cval=np.amax(line))
     else:
         assert "dew.png" in fname,"input must already be dewarped"
 
-    if line.size<10 or amax(line)==amin(line):
+    if line.size < 10 or np.amax(line) == np.amin(line):
         print("EMPTY-INPUT")
         continue
-    line = line * 1.0/amax(line)
-    line = amax(line)-line
+    line = line / np.amax(line)
+    line = np.amax(line) - line
     line = line.T
     if args.pad>0:
         w = line.shape[1]
-        line = vstack([zeros((args.pad,w)),line,zeros((args.pad,w))])
-    cs = array(codec.encode(transcript),'i')
+        line = np.vstack([np.zeros((args.pad, w)), line,
+                          np.zeros((args.pad, w))])
+    cs = np.array(codec.encode(transcript), 'i')
     try:
         pcs = network.trainSequence(line,cs,update=do_update,key=fname)
     except FloatingPointError as e:

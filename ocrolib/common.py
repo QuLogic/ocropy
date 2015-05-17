@@ -7,13 +7,13 @@ from __future__ import absolute_import, division, print_function
 
 import os,os.path
 import re
-import numpy
 import unicodedata
 import sys
 import warnings
 import inspect
 import glob
-from numpy import *
+
+import numpy as np
 from scipy.ndimage import morphology
 import multiprocessing
 import pylab
@@ -162,44 +162,47 @@ import PIL
 
 def pil2array(im,alpha=0):
     if im.mode=="L":
-        a = numpy.fromstring(im.tostring(),'B')
+        a = np.fromstring(im.tostring(), 'B')
         a.shape = im.size[1],im.size[0]
         return a
     if im.mode=="RGB":
-        a = numpy.fromstring(im.tostring(),'B')
+        a = np.fromstring(im.tostring(), 'B')
         a.shape = im.size[1],im.size[0],3
         return a
     if im.mode=="RGBA":
-        a = numpy.fromstring(im.tostring(),'B')
+        a = np.fromstring(im.tostring(), 'B')
         a.shape = im.size[1],im.size[0],4
         if not alpha: a = a[:,:,:3]
         return a
     return pil2array(im.convert("L"))
 
 def array2pil(a):
-    if a.dtype==dtype("B"):
+    if a.dtype == np.dtype("B"):
         if a.ndim==2:
             return PIL.Image.fromstring("L",(a.shape[1],a.shape[0]),a.tostring())
         elif a.ndim==3:
             return PIL.Image.fromstring("RGB",(a.shape[1],a.shape[0]),a.tostring())
         else:
             raise OcropusException("bad image rank")
-    elif a.dtype==dtype('float32'):
+    elif a.dtype == np.dtype('float32'):
         return PIL.Image.fromstring("F",(a.shape[1],a.shape[0]),a.tostring())
     else:
         raise OcropusException("unknown image type")
 
 def isbytearray(a):
-    return a.dtype in [dtype('uint8')]
+    return a.dtype in [np.dtype('uint8')]
 
 def isfloatarray(a):
-    return a.dtype in [dtype('f'),dtype('float32'),dtype('float64')]
+    return a.dtype in [np.dtype('f'), np.dtype('float32'), np.dtype('float64')]
 
 def isintarray(a):
-    return a.dtype in [dtype('B'),dtype('int16'),dtype('int32'),dtype('int64'),dtype('uint16'),dtype('uint32'),dtype('uint64')]
+    return a.dtype in [np.dtype('B'), np.dtype('int16'), np.dtype('int32'),
+                       np.dtype('int64'), np.dtype('uint16'),
+                       np.dtype('uint32'), np.dtype('uint64')]
 
 def isintegerarray(a):
-    return a.dtype in [dtype('int32'),dtype('int64'),dtype('uint32'),dtype('uint64')]
+    return a.dtype in [np.dtype('int32'), np.dtype('int64'),
+                       np.dtype('uint32'), np.dtype('uint64')]
 
 @checks(str,pageno=int,_=GRAYSCALE)
 def read_image_gray(fname,pageno=0):
@@ -211,20 +214,20 @@ def read_image_gray(fname,pageno=0):
     assert pageno==0
     pil = PIL.Image.open(fname)
     a = pil2array(pil)
-    if a.dtype==dtype('uint8'):
+    if a.dtype == np.dtype('uint8'):
         a = a/255.0
-    if a.dtype==dtype('int8'):
+    if a.dtype == np.dtype('int8'):
         a = a/127.0
-    elif a.dtype==dtype('uint16'):
+    elif a.dtype == np.dtype('uint16'):
         a = a/65536.0
-    elif a.dtype==dtype('int16'):
+    elif a.dtype == np.dtype('int16'):
         a = a/32767.0
     elif isfloatarray(a):
         pass
     else:
         raise OcropusException("unknown image type: "+a.dtype)
     if a.ndim==3:
-        a = mean(a,2)
+        a = np.mean(a, 2)
     return a
 
 
@@ -235,8 +238,9 @@ def write_image_gray(fname,image,normalize=0,verbose=0):
     the image must be of type unsigned byte."""
     if verbose: print("# writing", fname)
     if isfloatarray(image):
-        image = array(255*clip(image,0.0,1.0),'B')
-    assert image.dtype==dtype('B'),"array has wrong dtype: %s"%image.dtype
+        image = np.array(255 * np.clip(image, 0.0, 1.0), 'B')
+    assert image.dtype == np.dtype('B'), \
+        "array has wrong dtype: %s" % image.dtype
     im = array2pil(image)
     im.save(fname)
 
@@ -248,8 +252,8 @@ def read_image_binary(fname,dtype='i',pageno=0):
     assert pageno==0
     pil = PIL.Image.open(fname)
     a = pil2array(pil)
-    if a.ndim==3: a = amax(a,axis=2)
-    return array(a>0.5*(amin(a)+amax(a)),dtype)
+    if a.ndim == 3: a = np.amax(a, axis=2)
+    return np.array(a > 0.5 * (np.amin(a) + np.amax(a)), dtype)
 
 @checks(str,ABINARY2)
 def write_image_binary(fname,image,verbose=0):
@@ -258,7 +262,7 @@ def write_image_binary(fname,image,verbose=0):
     two values."""
     if verbose: print("# writing", fname)
     assert image.ndim==2
-    image = array(255*(image>midrange(image)),'B')
+    image = np.array(255 * (image > midrange(image)), 'B')
     im = array2pil(image)
     im.save(fname)
 
@@ -267,8 +271,11 @@ def rgb2int(a):
     """Converts a rank 3 array with RGB values stored in the
     last axis into a rank 2 array containing 32 bit RGB values."""
     assert a.ndim==3
-    assert a.dtype==dtype('B')
-    return array(0xffffff&((0x10000*a[:,:,0])|(0x100*a[:,:,1])|a[:,:,2]),'i')
+    assert a.dtype == np.dtype('B')
+    return np.array(0xffffff & ((0x10000 * a[:, :, 0]) |
+                                (0x100 * a[:, :, 1]) |
+                                a[:, :, 2]),
+                    'i')
 
 @checks(AINT2,_=AINT3)
 def int2rgb(image):
@@ -276,7 +283,7 @@ def int2rgb(image):
     last axis into a rank 2 array containing 32 bit RGB values."""
     assert image.ndim==2
     assert isintarray(image)
-    a = zeros(list(image.shape)+[3],'B')
+    a = np.zeros(image.shape + (3, ), 'B')
     a[:,:,0] = (image>>16)
     a[:,:,1] = (image>>8)
     a[:,:,2] = image
@@ -302,7 +309,7 @@ def read_line_segmentation(fname):
     encode the segmentation of a text line.  Returns an int array."""
     pil = PIL.Image.open(fname)
     a = pil2array(pil)
-    assert a.dtype==dtype('B')
+    assert a.dtype == np.dtype('B')
     assert a.ndim==3
     image = rgb2int(a)
     result = make_seg_black(image)
@@ -322,7 +329,7 @@ def read_page_segmentation(fname):
     encode the segmentation of a page.  Returns an int array."""
     pil = PIL.Image.open(fname)
     a = pil2array(pil)
-    assert a.dtype==dtype('B')
+    assert a.dtype == np.dtype('B')
     assert a.ndim==3
     segmentation = rgb2int(a)
     segmentation = make_seg_black(segmentation)
@@ -333,7 +340,7 @@ def write_page_segmentation(fname,image):
     """Writes a page segmentation, that is an RGB image whose values
     encode the segmentation of a page."""
     assert image.ndim==2
-    assert image.dtype in [dtype('int32'),dtype('int64')]
+    assert image.dtype in [np.dtype('int32'), np.dtype('int64')]
     a = int2rgb(make_seg_white(image))
     im = array2pil(a)
     im.save(fname)
@@ -344,14 +351,14 @@ def iulib_page_iterator(files):
         yield image,fname
 
 def norm_max(a):
-    return a/amax(a)
+    return a / np.amax(a)
 
 def pad_by(image,r,dtype=None):
     """Symmetrically pad the image by the given amount.
     FIXME: replace by scipy version."""
     if dtype is None: dtype = image.dtype
     w,h = image.shape
-    result = zeros((w+2*r,h+2*r))
+    result = np.zeros((w + 2 * r, h + 2 * r))
     result[r:(w+r),r:(h+r)] = image
     return result
 class RegionExtractor:
@@ -367,14 +374,15 @@ class RegionExtractor:
         """Set the image to be iterated over.  This should be an RGB image,
         ndim==3, dtype=='B'.  This picks a subset of the segmentation to iterate
         over, using a mask and lo and hi values.."""
-        assert image.dtype==dtype('B') or image.dtype==dtype('i'),"image must be type B or i"
+        assert image.dtype == np.dtype('B') or image.dtype == np.dtype('i'), \
+            "image must be type B or i"
         if image.ndim==3: image = rgb2int(image)
         assert image.ndim==2,"wrong number of dimensions"
         self.image = image
         labels = image
         if lo is not None: labels[labels<lo] = 0
         if hi is not None: labels[labels>hi] = 0
-        if mask is not None: labels = bitwise_and(labels,mask)
+        if mask is not None: labels = np.bitwise_and(labels, mask)
         labels,correspondence = morph.renumber_labels_ordered(labels,correspondence=1)
         self.labels = labels
         self.correspondence = correspondence
@@ -431,7 +439,7 @@ class RegionExtractor:
         m = self.labels[b]
         m[m!=index] = 0
         if margin>0: m = pad_by(m,margin)
-        return array(m!=0,'B')
+        return np.array(m != 0, 'B')
     def extract(self,image,index,margin=0):
         """Return the subimage for component index."""
         h,w = image.shape[:2]
@@ -440,7 +448,7 @@ class RegionExtractor:
         return image[max(0,r0-margin):min(h,r1+margin),max(0,c0-margin):min(w,c1+margin),...]
     def extractMasked(self,image,index,grow=0,bg=None,margin=0,dtype=None):
         """Return the masked subimage for component index, elsewhere the bg value."""
-        if bg is None: bg = amax(image)
+        if bg is None: bg = np.amax(image)
         h,w = image.shape[:2]
         mask = self.mask(index,margin=margin)
         # FIXME ... not circular
@@ -449,7 +457,7 @@ class RegionExtractor:
         box = self.bbox(index)
         r0,c0,r1,c1 = box
         subimage = improc.cut(image,(r0,c0,r0+mh-2*margin,c0+mw-2*margin),margin,bg=bg)
-        return where(mask,subimage,bg)
+        return np.where(mask, subimage, bg)
 
 
 
@@ -554,7 +562,7 @@ def check_valid_class_label(s):
 
 def summary(x):
     """Summarize a datatype as a string (for display and debugging)."""
-    if isinstance(x, numpy.ndarray):
+    if isinstance(x, np.ndarray):
         return "<ndarray %s %s>"%(x.shape,x.dtype)
     if isinstance(x, str) and len(x)>10:
         return '"%s..."'%x
@@ -860,10 +868,10 @@ def load_component(file):
 
 def binarize_range(image,dtype='B',threshold=0.5):
     """Binarize an image by its range."""
-    threshold = (amax(image)+amin(image))*threshold
+    threshold = (np.amax(image) + np.amin(image)) * threshold
     scale = 1
     if dtype=='B': scale = 255
-    return array(scale*(image>threshold),dtype=dtype)
+    return np.array(scale * (image > threshold), dtype=dtype)
 
 def draw_pseg(pseg,axis=None):
     if axis is None:
@@ -882,7 +890,7 @@ def draw_aligned(result,axis=None):
         axis = subplot(111)
     axis.imshow(NI(result.image),cmap=cm.gray)
     cseg = result.cseg
-    if isinstance(cseg, numpy.ndarray): cseg = common.lseg2narray(cseg)
+    if isinstance(cseg, np.ndarray): cseg = common.lseg2narray(cseg)
     ocropy.make_line_segmentation_black(cseg)
     ocropy.renumber_labels(cseg,1)
     bboxes = ocropy.rectarray()
@@ -913,13 +921,13 @@ def plotgrid(data,d=10,shape=(30,30)):
 def showrgb(r,g=None,b=None):
     if g is None: g = r
     if b is None: b = r
-    imshow(array([r,g,b]).transpose([1,2,0]))
+    imshow(np.array([r, g, b]).transpose([1, 2, 0]))
 
 def showgrid(l,cols=None,n=400,titles=None,xlabels=None,ylabels=None,**kw):
     if "cmap" not in kw: kw["cmap"] = pylab.cm.gray
     if "interpolation" not in kw: kw["interpolation"] = "nearest"
-    n = minimum(n,len(l))
-    if cols is None: cols = int(sqrt(n))
+    n = min(n,len(l))
+    if cols is None: cols = int(np.sqrt(n))
     rows = (n+cols-1)//cols
     for i in range(n):
         pylab.xticks([]); pylab.yticks([])
@@ -957,22 +965,22 @@ def gt_implode(l):
 @checks(int,sequence=int,frac=int,_=BOOL)
 def testset(index,sequence=0,frac=10):
     # this doesn't have to be good, just a fast, somewhat random function
-    return sequence==int(abs(sin(index))*1.23456789e6)%frac
+    return sequence == int(np.abs(np.sin(index)) * 1.23456789e6) % frac
 
 def midrange(image,frac=0.5):
     """Computes the center of the range of image values
     (for quick thresholding)."""
-    return frac*(amin(image)+amax(image))
+    return frac * (np.amin(image) + np.amax(image))
 from scipy.ndimage import measurements
 
 def remove_noise(line,minsize=8):
     """Remove small pixels from an image."""
     if minsize==0: return line
-    bin = (line>0.5*amax(line))
+    bin = (line > 0.5 * np.amax(line))
     labels,n = morph.label(bin)
     sums = measurements.sum(bin,labels,range(n+1))
     sums = sums[labels]
-    good = minimum(bin,1-(sums>0)*(sums<minsize))
+    good = np.minimum(bin, 1 - (sums > 0) * (sums < minsize))
     return good
 
 class MovingStats:
@@ -985,6 +993,6 @@ class MovingStats:
         self.data = self.data[-self.n:]
         self.count += 1
     def mean(self):
-        if len(self.data)==0: return nan
-        return mean(self.data)
+        if len(self.data)==0: return np.nan
+        return np.mean(self.data)
 

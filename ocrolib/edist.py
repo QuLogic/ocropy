@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
 from scipy.ndimage import filters
-from pylab import *
 import re
 
 def levenshtein(a,b):
@@ -23,10 +23,10 @@ def xlevenshtein(a,b,context=1):
     """Calculates the Levensthein distance between a and b
     and generates a list of differences by context."""
     n, m = len(a), len(b)
-    sources = empty((m+1,n+1),object)
+    sources = np.empty((m + 1, n + 1), object)
     sources[:,:] = None
-    dists = 99999*ones((m+1,n+1))
-    dists[0,:] = arange(n+1)
+    dists = 99999 * np.ones((m + 1, n + 1))
+    dists[0, :] = np.arange(n + 1)
     for i in range(1,m+1):
         previous = dists[i-1,:]
         current = dists[i,:]
@@ -70,7 +70,7 @@ def xlevenshtein(a,b,context=1):
     al = " "*context+al+" "*context
     bl = " "*context+bl+" "*context
     assert "~" not in al and "~" not in bl
-    same = array([al[i]==bl[i] for i in range(len(al))],'i')
+    same = np.array([al[i] == bl[i] for i in range(len(al))], 'i')
     same = filters.minimum_filter(same,1+2*context)
     als = "".join([al[i] if not same[i] else "~" for i in range(len(al))])
     bls = "".join([bl[i] if not same[i] else "~" for i in range(len(bl))])

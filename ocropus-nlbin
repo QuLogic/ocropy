@@ -4,6 +4,8 @@ from __future__ import absolute_import, division, print_function
 
 from pylab import *
 import argparse,os,os.path
+
+import numpy as np
 from scipy.ndimage import filters,interpolation,morphology,measurements
 from scipy import stats
 import multiprocessing
@@ -48,7 +50,7 @@ if len(args.files)<1:
 
 def check_page(image):
     if len(image.shape)==3: return "input image is color image %s"%(image.shape,)
-    if mean(image)<median(image): return "image may be inverted"
+    if np.mean(image) < np.median(image): return "image may be inverted"
     h,w = image.shape
     if h<600: return "image not tall enough for a page image %s"%(image.shape,)
     if h>10000: return "image too tall for a page image %s"%(image.shape,)
@@ -59,18 +61,19 @@ def check_page(image):
 def estimate_scale(binary):
     objects = binary_objects(binary)
     bysize = sorted(objects,key=A)
-    scalemap = zeros(binary.shape)
+    scalemap = np.zeros(binary.shape)
     for o in bysize:
-        if amax(scalemap[o])>0: continue
+        if np.amax(scalemap[o]) > 0: continue
         scalemap[o] = A(o)**0.5
-    scale = median(scalemap[(scalemap>3)&(scalemap<100)])
+    scale = np.median(scalemap[(scalemap > 3) & (scalemap < 100)])
     return scale
 
 def estimate_skew_angle(image,angles):
     estimates = []
     for a in angles:
-        v = mean(interpolation.rotate(image,a,order=0,mode='constant'),axis=1)
-        v = var(v)
+        v = np.mean(interpolation.rotate(image, a, order=0, mode='constant'),
+                    axis=1)
+        v = np.var(v)
         estimates.append((v,a))
     if args.debug>0:
         plot([y for x,y in estimates],[x for x,y in estimates])
@@ -82,8 +85,8 @@ def select_regions(binary,f,min=0,nbest=100000):
     labels,n = measurements.label(binary)
     objects = measurements.find_objects(labels)
     scores = [f(o) for o in objects]
-    best = argsort(scores)
-    keep = zeros(len(objects)+1,'B')
+    best = np.argsort(scores)
+    keep = np.zeros(len(objects) + 1, 'B')
     for i in best[-nbest:]:
         if scores[i]<=min: continue
         keep[i+1] = 1
@@ -105,14 +108,14 @@ def process1(job):
     raw = ocrolib.read_image_gray(fname)
     dshow(raw,"input")
     # perform image normalization
-    image = raw-amin(raw)
-    if amax(image)==amin(image): 
+    image = raw - np.amin(raw)
+    if np.amax(image) == np.amin(image):
         print("# image is empty", fname)
         return
-    image /= amax(image)
+    image /= np.amax(image)
 
     if not args.nocheck:
-        check = check_page(amax(image)-image)
+        check = check_page(np.amax(image) - image)
         if check is not None:
             print(fname, "SKIPPED", check, "(use -n to disable this check)")
             return
@@ -121,7 +124,7 @@ def process1(job):
     if args.gray:
         extreme = 0
     else:
-        extreme = (sum(image<0.05)+sum(image>0.95))*1.0/prod(image.shape)
+        extreme = (np.sum(image < 0.05) + np.sum(image > 0.95)) / image.size
     if extreme>0.95:
         comment += " no-normalization"
         flat = image
@@ -133,8 +136,8 @@ def process1(job):
         m = filters.percentile_filter(m,args.perc,size=(2,args.range))
         m = interpolation.zoom(m,1.0/args.zoom)
         if args.debug>0: clf(); imshow(m,vmin=0,vmax=1); ginput(1,args.debug)
-        w,h = minimum(array(image.shape),array(m.shape))
-        flat = clip(image[:w,:h]-m[:w,:h]+1,0,1)
+        w,h = np.minimum(np.array(image.shape), np.array(m.shape))
+        flat = np.clip(image[:w, :h] - m[:w, :h] + 1, 0, 1)
         if args.debug>0: clf(); imshow(flat,vmin=0,vmax=1); ginput(1,args.debug)
 
     # estimate skew angle and rotate
@@ -142,14 +145,14 @@ def process1(job):
         if args.parallel<2: print("estimating skew angle")
         d0,d1 = flat.shape
         o0,o1 = int(args.bignore*d0),int(args.bignore*d1)
-        flat = amax(flat)-flat
-        flat -= amin(flat)
+        flat = np.amax(flat) - flat
+        flat -= np.amin(flat)
         est = flat[o0:d0-o0,o1:d1-o1]
         ma = args.maxskew
         ms = int(2*args.maxskew*args.skewsteps)
-        angle = estimate_skew_angle(est,linspace(-ma,ma,ms+1))
+        angle = estimate_skew_angle(est, np.linspace(-ma, ma, ms + 1))
         flat = interpolation.rotate(flat,angle,mode='constant',reshape=0)
-        flat = amax(flat)-flat
+        flat = np.amax(flat) - flat
     else:
         angle = 0
 
@@ -165,9 +168,9 @@ def process1(job):
         e = args.escale
         v = est-filters.gaussian_filter(est,e*20.0)
         v = filters.gaussian_filter(v**2,e*20.0)**0.5
-        v = (v>0.3*amax(v))
-        v = morphology.binary_dilation(v,structure=ones((e*50,1)))
-        v = morphology.binary_dilation(v,structure=ones((1,e*50)))
+        v = (v > 0.3 * np.amax(v))
+        v = morphology.binary_dilation(v, structure=np.ones((e * 50, 1)))
+        v = morphology.binary_dilation(v, structure=np.ones((1, e * 50)))
         if args.debug>0: imshow(v); ginput(1,args.debug)
         est = est[v]
     lo = stats.scoreatpercentile(est.ravel(),args.lo)
@@ -177,7 +180,7 @@ def process1(job):
     if args.parallel<2: print("rescaling")
     flat -= lo
     flat /= (hi-lo)
-    flat = clip(flat,0,1)
+    flat = np.clip(flat, 0, 1)
     if args.debug>0: imshow(flat,vmin=0,vmax=1); ginput(1,args.debug)
     bin = 1*(flat>args.threshold)
 

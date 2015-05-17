@@ -8,6 +8,8 @@ from pylab import *
 import os.path
 import ocrolib
 import argparse
+
+import numpy as np
 import matplotlib
 from multiprocessing import Pool
 from ocrolib import edist
@@ -66,14 +68,14 @@ args = parser.parse_args()
 
 def check_line(image):
     if len(image.shape)==3: return "input image is color image %s"%(image.shape,)
-    if mean(image)<median(image): return "image may be inverted"
+    if np.mean(image) < np.median(image): return "image may be inverted"
     h,w = image.shape
     if h<20: return "image not tall enough for a text line %s"%(image.shape,)
     if h>200: return "image too tall for a text line %s"%(image.shape,)
     if w<1.5*h: return "line too short %s"%(image.shape,)
     if w>4000: return "line too long %s"%(image.shape,)
     ratio = w*1.0/h
-    _,ncomps = measurements.label(image>mean(image))
+    _, ncomps = measurements.label(image > np.mean(image))
     lo = int(0.5*ratio+0.5)
     hi = int(4*ratio)+1
     if ncomps<lo: return "too few connected components (got %d, wanted >=%d)"%(ncomps,lo)
@@ -130,21 +132,21 @@ def process1(arg):
     base,_ = ocrolib.allsplitext(fname)
     line = ocrolib.read_image_gray(fname)
     raw_line = line.copy()
-    if prod(line.shape)==0: return None
-    if amax(line)==amin(line): return None
+    if line.size == 0: return None
+    if np.amax(line) == np.amin(line): return None
 
     if not args.nocheck:
-        check = check_line(amax(line)-line)
+        check = check_line(np.amax(line) - line)
         if check is not None:
             print(fname, "SKIPPED", check, "(use -n to disable this check)")
             return (0,[],0,trial,fname)            
 
     if not args.nolineest:
         assert "dew.png" not in fname,"don't dewarp dewarped images"
-        temp = amax(line)-line
-        temp = temp*1.0/amax(temp)
+        temp = np.amax(line) - line
+        temp = temp / np.amax(temp)
         lnorm.measure(temp)
-        line = lnorm.normalize(line,cval=amax(line))
+        line = lnorm.normalize(line, cval=np.amax(line))
     else:
         assert "dew.png" in fname,"only apply to dewarped images"
 
@@ -225,10 +227,12 @@ def process1(arg):
         subplot(313)
         plot(network.outputs[:,0],color='yellow',linewidth=3,alpha=0.5)
         plot(network.outputs[:,1],color='green',linewidth=3,alpha=0.5)
-        plot(amax(network.outputs[:,2:],axis=1),color='blue',linewidth=3,alpha=0.5)
+        plot(np.amax(network.outputs[:, 2:], axis=1),
+             color='blue', linewidth=3, alpha=0.5)
         plot(network.aligned[:,0],color='orange',linestyle='dashed',alpha=0.7)
         plot(network.aligned[:,1],color='green',linestyle='dashed',alpha=0.5)
-        plot(amax(network.aligned[:,2:],axis=1),color='blue',linestyle='dashed',alpha=0.5)
+        plot(np.amax(network.aligned[:, 2:], axis=1),
+             color='blue', linestyle='dashed', alpha=0.5)
         if args.save is not None:
             draw()
             savename = args.save

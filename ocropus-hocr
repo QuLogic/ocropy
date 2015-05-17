@@ -5,7 +5,9 @@ from __future__ import absolute_import, division, print_function
 import __builtin__ as python
 import random as pyrandom
 import sys,os,re,glob,argparse,codecs
-from pylab import median, imread
+
+import numpy as np
+from pylab import imread
 
 import ocrolib
 from ocrolib import hocr
@@ -49,12 +51,13 @@ xhfiles = python.sum([glob.glob(d+"/??????.xheight") for d in dirs],[])
 if len(xhfiles)>5:
     xheights = [float(ocrolib.read_text(f)) for f in xhfiles]
     if len(xheights)>0:
-        median_xheight = median(xheights)
+        median_xheight = np.median(xheights)
 else:    
     lfiles = python.sum([glob.glob(d+"/??????.bin.png") for d in dirs],[])
     pyrandom.shuffle(lfiles)
     if len(lfiles)>0:
-        median_xheight = 0.5*median([imread(f).shape[0] for f in lfiles[:100]])
+        median_xheight = 0.5 * np.median([imread(f).shape[0]
+                                          for f in lfiles[:100]])
 E("median_xheight",median_xheight)
 
 P(hocr.header())

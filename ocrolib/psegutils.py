@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 from pylab import *
+import numpy as np
 from scipy.ndimage import filters,interpolation
 
 from .toplevel import *
@@ -8,8 +9,8 @@ from . import morph, sl
 
 
 def B(a):
-    if a.dtype==dtype('B'): return a
-    return array(a,'B')
+    if a.dtype == np.dtype('B'): return a
+    return np.array(a, 'B')
 
 class record:
     def __init__(self,**kw): self.__dict__.update(kw)
@@ -44,17 +45,17 @@ def binary_objects(binary):
 def estimate_scale(binary):
     objects = binary_objects(binary)
     bysize = sorted(objects,key=sl.area)
-    scalemap = zeros(binary.shape)
+    scalemap = np.zeros(binary.shape)
     for o in bysize:
-        if amax(scalemap[o])>0: continue
+        if np.amax(scalemap[o]) > 0: continue
         scalemap[o] = sl.area(o)**0.5
-    scale = median(scalemap[(scalemap>3)&(scalemap<100)])
+    scale = np.median(scalemap[(scalemap > 3) & (scalemap < 100)])
     return scale
 
 def compute_boxmap(binary,scale,threshold=(.5,4),dtype='i'):
     objects = binary_objects(binary)
     bysize = sorted(objects,key=sl.area)
-    boxmap = zeros(binary.shape,dtype)
+    boxmap = np.zeros(binary.shape, dtype)
     for o in bysize:
         if sl.area(o)**.5<threshold[0]*scale: continue
         if sl.area(o)**.5>threshold[1]*scale: continue
@@ -70,7 +71,7 @@ def compute_lines(segmentation,scale):
         if o is None: continue
         if sl.dim1(o)<2*scale or sl.dim0(o)<scale: continue
         mask = (segmentation[o]==i+1)
-        if amax(mask)==0: continue
+        if np.amax(mask) == 0: continue
         result = record()
         result.label = i+1
         result.bounds = o
@@ -78,9 +79,9 @@ def compute_lines(segmentation,scale):
         lines.append(result)
     return lines
 
-def pad_image(image,d,cval=inf):
-    result = ones(array(image.shape)+2*d)
-    result[:,:] = amax(image) if cval==inf else cval
+def pad_image(image, d, cval=np.inf):
+    result = np.ones(np.array(image.shape) + 2 * d)
+    result[:, :] = np.amax(image) if cval == np.inf else cval
     result[d:-d,d:-d] = image
     return result
 
@@ -88,23 +89,25 @@ def pad_image(image,d,cval=inf):
 def extract(image,y0,x0,y1,x1,mode='nearest',cval=0):
     h,w = image.shape
     ch,cw = y1-y0,x1-x0
-    y,x = clip(y0,0,max(h-ch,0)),clip(x0,0,max(w-cw, 0))
+    y, x = np.clip(y0, 0, max(h - ch, 0)), np.clip(x0, 0, max(w - cw, 0))
     sub = image[y:y+ch,x:x+cw]
     # print("extract", image.dtype, image.shape)
     try:
         r = interpolation.shift(sub,(y-y0,x-x0),mode=mode,cval=cval,order=0)
         if cw > w or ch > h:
             pady0, padx0 = max(-y0, 0), max(-x0, 0)
-            r = interpolation.affine_transform(r, eye(2), offset=(pady0, padx0), cval=1, output_shape=(ch, cw))
+            r = interpolation.affine_transform(r, np.eye(2),
+                                               offset=(pady0, padx0), cval=1,
+                                               output_shape=(ch, cw))
         return r
 
     except RuntimeError:
         # workaround for platform differences between 32bit and 64bit
         # scipy.ndimage
         dtype = sub.dtype
-        sub = array(sub,dtype='float64')
+        sub = np.array(sub, dtype='float64')
         sub = interpolation.shift(sub,(y-y0,x-x0),mode=mode,cval=cval,order=0)
-        sub = array(sub,dtype=dtype)
+        sub = np.array(sub, dtype=dtype)
         return sub
 
 @checks(ARANK(2),True,pad=int,expand=int,_=GRAYSCALE)
@@ -120,7 +123,7 @@ def extract_masked(image,linedesc,pad=5,expand=0):
     line = extract(image,y0-pad,x0-pad,y1+pad,x1+pad)
     if expand>0:
         mask = filters.maximum_filter(mask,(expand,expand))
-    line = where(mask,line,amax(line))
+    line = np.where(mask, line, np.amax(line))
     return line
 
 def reading_order(lines,highlight=None,debug=0):
@@ -128,7 +131,7 @@ def reading_order(lines,highlight=None,debug=0):
     the partial reading order.  The output is a binary 2D array
     such that order[i,j] is true if line i comes before line j
     in reading order."""
-    order = zeros((len(lines),len(lines)),'B')
+    order = np.zeros((len(lines), len(lines)), 'B')
     def x_overlaps(u,v):
         return u[1].start<v[1].stop and u[1].stop>v[1].start
     def above(u,v):
@@ -164,12 +167,12 @@ def topsort(order):
     compute a topological sort.  This is a quick and dirty implementation
     that works for up to a few thousand elements."""
     n = len(order)
-    visited = zeros(n)
+    visited = np.zeros(n)
     L = []
     def visit(k):
         if visited[k]: return
         visited[k] = 1
-        for l in find(order[:,k]):
+        for l in np.where(order[:, k])[0]:
             visit(l)
         L.append(k)
     for k in range(n):

@@ -2,14 +2,14 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pylab import *
+import sys
 import ocrolib
 import argparse
-import numpy
+import numpy as np
 from ocrolib import lineest
 import scipy
 
-numpy.seterr(divide='raise',over='raise',invalid='raise',under='ignore')
+np.seterr(divide='raise', over='raise', invalid='raise', under='ignore')
 
 parser = argparse.ArgumentParser("dewarp lines as used for the recognizer")
 
@@ -41,8 +41,8 @@ for fname in inputs:
     base,_ = ocrolib.allsplitext(fname)
     try:
         line = ocrolib.read_image_gray(fname)
-        lnorm.measure(amax(line)-line)
-        line = lnorm.normalize(line,cval=amax(line))
+        lnorm.measure(np.amax(line) - line)
+        line = lnorm.normalize(line, cval=np.amax(line))
         scipy.misc.imsave(base+".dew.png",line)
     except Exception as e:
         print("ERROR", e)

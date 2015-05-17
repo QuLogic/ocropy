@@ -13,9 +13,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pylab import *
 import argparse,glob,os,os.path
+import sys
 import traceback
+
+import numpy as np
 from scipy.ndimage import measurements
 from scipy.misc import imsave
 from scipy.ndimage.filters import gaussian_filter,uniform_filter,maximum_filter
@@ -89,17 +91,17 @@ args = parser.parse_args()
 args.files = ocrolib.glob_all(args.files)
 
 def norm_max(v):
-    return v/amax(v)
+    return v / np.amax(v)
 def check_page(image):
     if len(image.shape)==3: return "input image is color image %s"%(image.shape,)
-    if mean(image)<median(image): return "image may be inverted"
+    if np.mean(image) < np.median(image): return "image may be inverted"
     h,w = image.shape
     if h<600: return "image not tall enough for a page image %s"%(image.shape,)
     if h>10000: return "image too tall for a page image %s"%(image.shape,)
     if w<600: return "image too narrow for a page image %s"%(image.shape,)
     if w>10000: return "line too wide for a page image %s"%(image.shape,)
     slots = int(w*h*1.0/(30*30))
-    _,ncomps = measurements.label(image>mean(image))
+    _, ncomps = measurements.label(image > np.mean(image))
     if ncomps<10: return "too few connected components for a page image (got %d)"%(ncomps,)
     if ncomps>slots: return "too many connnected components for a page image (%d > %d)"%(ncomps,slots)
     return None
@@ -116,14 +118,14 @@ if args.parallel>1:
     args.quiet = 1
 
 def B(a):
-    if a.dtype==dtype('B'): return a
-    return array(a,'B')
+    if a.dtype == np.dtype('B'): return a
+    return np.array(a, 'B')
 
 def DSAVE(title,image):
     if not args.debug: return
     if isinstance(image, list):
         assert len(image)==3
-        image = transpose(array(image),[1,2,0])
+        image = np.transpose(np.array(image), [1, 2, 0])
     fname = "_"+title+".png"
     print("debug", fname)
     imsave(fname,image)
@@ -155,7 +157,7 @@ def compute_colseps_morph(binary,scale,maxseps=3,minheight=20,maxwidth=5):
     using morphological operations."""
     boxmap = psegutils.compute_boxmap(binary,scale,dtype='B')
     bounds = morph.rb_closing(B(boxmap),(int(5*scale),int(5*scale)))
-    bounds = maximum(B(1-bounds),B(boxmap))
+    bounds = np.maximum(B(1 - bounds), B(boxmap))
     cols = 1-morph.rb_closing(boxmap,(int(20*scale),int(scale)))
     cols = morph.select_regions(cols,sl.aspect,min=args.csminaspect)
     cols = morph.select_regions(cols,sl.dim0,min=args.csminheight*scale,nbest=args.maxcolseps)
@@ -169,16 +171,16 @@ def compute_colseps_mconv(binary,scale=1.0):
     h,w = binary.shape
     smoothed = gaussian_filter(1.0*binary,(scale,scale*0.5))
     smoothed = uniform_filter(smoothed,(5.0*scale,1))
-    thresh = (smoothed<amax(smoothed)*0.1)
+    thresh = (smoothed < np.amax(smoothed) * 0.1)
     DSAVE("1thresh",thresh)
     blocks = morph.rb_closing(binary,(int(4*scale),int(4*scale)))
     DSAVE("2blocks",blocks)
-    seps = minimum(blocks,thresh)
+    seps = np.minimum(blocks, thresh)
     seps = morph.select_regions(seps,sl.dim0,min=args.csminheight*scale,nbest=args.maxcolseps)
     DSAVE("3seps",seps)
     blocks = morph.r_dilation(blocks,(5,5))
     DSAVE("4blocks",blocks)
-    seps = maximum(seps,1-blocks)
+    seps = np.maximum(seps, 1 - blocks)
     DSAVE("5combo",seps)
     return seps
 
@@ -189,16 +191,17 @@ def compute_colseps_conv(binary,scale=1.0):
     # find vertical whitespace by thresholding
     smoothed = gaussian_filter(1.0*binary,(scale,scale*0.5))
     smoothed = uniform_filter(smoothed,(5.0*scale,1))
-    thresh = (smoothed<amax(smoothed)*0.1)
+    thresh = (smoothed < np.amax(smoothed) * 0.1)
     DSAVE("1thresh",thresh)
     # find column edges by filtering
     grad = gaussian_filter(1.0*binary,(scale,scale*0.5),order=(0,1))
     grad = uniform_filter(grad,(10.0*scale,1))
     # grad = abs(grad) # use this for finding both edges
-    grad = (grad>0.5*amax(grad))
+    grad = (grad > 0.5 * np.amax(grad))
     DSAVE("2grad",grad)
     # combine edges and whitespace
-    seps = minimum(thresh,maximum_filter(grad,(int(scale),int(5*scale))))
+    seps = np.minimum(thresh,
+                      maximum_filter(grad, (int(scale), int(5 * scale))))
     seps = maximum_filter(seps,(int(2*scale),1))
     DSAVE("3seps",seps)
     # select only the biggest column separators
@@ -214,8 +217,8 @@ def compute_colseps(binary,scale):
         seps = compute_separators_morph(binary,scale)
         DSAVE("colseps",0.7*seps+0.3*binary)
         #colseps = compute_colseps_morph(binary,scale)
-        colseps = maximum(colseps,seps)
-        binary = minimum(binary,1-seps)
+        colseps = np.maximum(colseps, seps)
+        binary = np.minimum(binary, 1 - seps)
     return colseps,binary
 
 
@@ -253,14 +256,16 @@ def compute_line_seeds(binary,bottom,top,colseps,scale):
     t = args.threshold
     vrange = int(args.vscale*scale)
     bmarked = maximum_filter(bottom==maximum_filter(bottom,(vrange,0)),(2,2))
-    bmarked *= (bottom>t*amax(bottom)*t)*(1-colseps)
+    bmarked *= (bottom > t * np.amax(bottom) * t) * (1 - colseps)
     tmarked = maximum_filter(top==maximum_filter(top,(vrange,0)),(2,2))
-    tmarked *= (top>t*amax(top)*t/2)*(1-colseps)
+    tmarked *= (top > t * np.amax(top) * t / 2) * (1 - colseps)
     tmarked = maximum_filter(tmarked,(1,20))
-    seeds = zeros(binary.shape,'i')
+    seeds = np.zeros(binary.shape, 'i')
     delta = max(3,int(scale/2))
     for x in range(bmarked.shape[1]):
-        transitions = sorted([(y,1) for y in find(bmarked[:,x])]+[(y,0) for y in find(tmarked[:,x])])[::-1]
+        transitions = sorted([(y, 1) for y in np.where(bmarked[:, x])[0]] +
+                             [(y, 0) for y in np.where(tmarked[:, x])[0]],
+                             reverse=True)
         transitions += [(0,0)]
         for l in range(len(transitions)-1):
             y0,s0 = transitions[l]
@@ -286,12 +291,12 @@ def remove_hlines(binary,scale,maxsize=10):
     for i,b in enumerate(objects):
         if sl.width(b)>maxsize*scale:
             labels[b][labels[b]==i+1] = 0
-    return array(labels!=0,'B')
+    return np.array(labels != 0, 'B')
 
 def compute_segmentation(binary,scale):
     """Given a binary image, compute a complete segmentation into
     lines, computing both columns and text lines."""
-    binary = array(binary,'B')
+    binary = np.array(binary, 'B')
 
     # start by removing horizontal black lines, which only
     # interfere with the rest of the page segmentation
@@ -313,7 +318,7 @@ def compute_segmentation(binary,scale):
     llabels = morph.propagate_labels(boxmap,seeds,conflict=0)
     if not args.quiet: print("spreading labels")
     spread = morph.spread_labels(seeds,maxdist=scale)
-    llabels = where(llabels>0,llabels,spread*binary)
+    llabels = np.where(llabels > 0, llabels, spread * binary)
     segmentation = llabels*binary
     return segmentation
 
@@ -342,7 +347,7 @@ def process1(job):
     checktype(binary,ABINARY2)
  
     if not args.nocheck:
-        check = check_page(amax(binary)-binary)
+        check = check_page(np.amax(binary) - binary)
         if check is not None:
             print(fname, "SKIPPED", check, "(use -n to disable this check)")
             return
@@ -359,7 +364,7 @@ def process1(job):
     else:
         scale = args.scale
     print("scale", scale)
-    if isnan(scale) or scale>1000.0:
+    if np.isnan(scale) or scale > 1000.0:
         sys.stderr.write("%s: bad scale (%g); skipping\n"%(fname,scale))
         return
     if scale<args.minscale:
@@ -370,10 +375,10 @@ def process1(job):
 
     if not args.quiet: print("computing segmentation")
     segmentation = compute_segmentation(binary,scale)
-    if amax(segmentation)>args.maxlines: 
-        print(fname, ": too many lines", amax(segmentation))
+    if np.amax(segmentation) > args.maxlines:
+        print(fname, ": too many lines", np.amax(segmentation))
         return 
-    if not args.quiet: print("number of lines", amax(segmentation))
+    if not args.quiet: print("number of lines", np.amax(segmentation))
 
     # compute the reading order
 
@@ -384,8 +389,8 @@ def process1(job):
 
     # renumber the labels so that they conform to the specs
 
-    nlabels = amax(segmentation)+1
-    renumber = zeros(nlabels,'i')
+    nlabels = np.amax(segmentation) + 1
+    renumber = np.zeros(nlabels, 'i')
     for i,v in enumerate(lsort): renumber[lines[v].label] = 0x010000+(i+1)
     segmentation = renumber[segmentation]
 

@@ -3,10 +3,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pylab import *
 from collections import Counter,defaultdict
 import re
 import codecs
+
+import numpy as np
+
 
 replacements = [
     (r'[\0-\x1f]',''), # get rid of weird control characters
@@ -38,10 +40,10 @@ replacements2 = replacements + [
     ]
 
 def rsample(dist):
-    v = add.accumulate(dist)
+    v = np.cumsum(dist)
     assert abs(v[-1]-1)<1e-3
-    val = rand()
-    return searchsorted(v,val)
+    val = np.random.rand()
+    return np.searchsorted(v, val)
 
 def safe_readlines(stream,nonl=0):
     once = 0
@@ -124,8 +126,8 @@ class NGraphs(NGraphsCounts):
         for prefix in ngrams.keys():
             ps = [(k[-1],v) for k,v in ngrams[prefix]] + [("~",1)]
             total = sum([v for k,v in ps])
-            total = log(total)
-            ps = {k : total-log(v) for k,v in ps}
+            total = np.log(total)
+            ps = {k: total - np.log(v) for k, v in ps}
             lposteriors[prefix] = ps
         self.lposteriors = lposteriors
     def sample(self,n=80,prefix=None):
@@ -137,14 +139,14 @@ class NGraphs(NGraphsCounts):
         for i in range(n):
             lposteriors = self.lposteriors.get(prefix[-self.N+1:])
             if lposteriors is None:
-                prefix += chr(ord("a")+int(rand()*26))
+                prefix += chr(ord("a") + int(np.random.rand() * 26))
             else:
                 items = [(k,p) for k,p in lposteriors.items() if k not in ["~","_"]]
                 items += [(" ",10.0)]
                 ks = [k for k,p in items]
-                ps = array([p for k,p in items],'f')
-                ps = exp(-ps)
-                ps /= sum(ps)
+                ps = np.array([p for k, p in items], 'f')
+                ps = np.exp(-ps)
+                ps /= np.sum(ps)
                 j = rsample(ps)
                 prefix += ks[j]
         return prefix[self.N:]

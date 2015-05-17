@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import cairo
 from cairoextras import *
-from numpy import *
+import numpy as np
 from scipy import *
 from pylab import *
 import pango,pangocairo
@@ -61,14 +61,14 @@ def cairo_render_string(s,fontname=None,fontfile=None,size=None,bg=(0.0,0.0,0.0)
 
     data = surface.get_data()
     data = bytearray(data)
-    a = array(data,'B')
+    a = np.array(data, 'B')
     a.shape = (h,w,4)
     a = a[:th,:tw,:3]
     a = a[:,:,::-1]
     return a
 
 def cairo_render_gray(*args,**kw):
-    return mean(cairo_render_string(*args,**kw),axis=2)
+    return np.mean(cairo_render_string(*args, **kw), axis=2)
 
 def pango_families():
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,1,1)
@@ -120,7 +120,7 @@ def pango_render_string(s,spec=None,fontfile=None,size=None,bg=(0.0,0.0,0.0),fg=
 
     data = surface.get_data()
     data = bytearray(data)
-    a = array(data,'B')
+    a = np.array(data, 'B')
     a.shape = (h,w,4)
     a = a[:th,:tw,:3]
     a = a[:,:,::-1]
@@ -129,11 +129,11 @@ def pango_render_string(s,spec=None,fontfile=None,size=None,bg=(0.0,0.0,0.0),fg=
     return a
 
 def pango_render_gray(*args,**kw):
-    return mean(pango_render_string(*args,**kw),axis=2)
+    return np.mean(pango_render_string(*args, **kw), axis=2)
 
 def gauss_degrade(image,margin=1.0,change=None,noise=0.02,minmargin=0.5,inner=1.0):
-    if image.ndim==3: image = mean(image,axis=2)
-    m = mean([amin(image),amax(image)])
+    if image.ndim==3: image = np.mean(image, axis=2)
+    m = (np.amin(image) + np.amax(image)) / 2
     image = 1*(image>m)
     if margin<minmargin: return 1.0*image
     pixels = sum(image)
@@ -146,20 +146,21 @@ def gauss_degrade(image,margin=1.0,change=None,noise=0.02,minmargin=0.5,inner=1.
     ri = int(margin+0.5-inner)
     if ri<=0: mask = binary_dilation(image,iterations=r)-image
     else: mask = binary_dilation(image,iterations=r)-binary_erosion(image,iterations=ri)
-    image += mask*randn(*image.shape)*noise*min(1.0,margin**2)
+    image += mask * np.random.randn(*image.shape) * noise * min(1.0, margin**2)
     smoothed = gaussian_filter(1.0*image,margin)
-    frac = max(0.0,min(1.0,npixels*1.0/prod(image.shape)))
+    frac = max(0.0, min(1.0, npixels * 1.0 / image.size))
     threshold = mquantiles(smoothed,prob=[1.0-frac])[0]
     result = (smoothed>threshold)
     return 1.0*result
 
 def gauss_distort(images,maxdelta=2.0,sigma=10.0):
     n,m = images[0].shape
-    deltas = randn(2,n,m)
+    deltas = np.random.randn(2, n, m)
     deltas = gaussian_filter(deltas,(0,sigma,sigma))
-    deltas /= max(amax(deltas),-amin(deltas))
+    deltas /= max(np.amax(deltas), -np.amin(deltas))
     deltas *= maxdelta
-    xy = transpose(array(meshgrid(range(n),range(m))),axes=[0,2,1])
+    xy = np.transpose(np.array(np.meshgrid(np.arange(n), np.arange(m))),
+                      axes=[0, 2, 1])
     # print(xy.shape, deltas.shape)
     deltas +=  xy
     return [map_coordinates(image,deltas,order=1) for image in images]
@@ -170,7 +171,7 @@ if __name__=="__main__":
     show()
     while 1:
         image = pango_render_string("A",spec="Arial",size=24,pad=20,scale=4.0)
-        image = average(image,axis=2)
+        image = np.average(image, axis=2)
         for i in range(7):
             for j in range(7):
                 noise = gauss_degrade(image,margin=(i-2)*0.5,noise=j*0.2)
@@ -228,7 +229,7 @@ def cairo_render_at(s,loc=None,shape=None,
     cr.show_text(s)
     data = surface.get_data()
     data = bytearray(data)
-    a = array(data,'B')
+    a = np.array(data, 'B')
     a.shape = (h,w,4)
     a = a[:,:,:3]
     a = a[:,:,::-1]

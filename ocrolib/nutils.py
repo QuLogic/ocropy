@@ -38,6 +38,6 @@ def sumprod(u,v,out=None):
     return out
 
 def test():
-    from pylab import randn
+    from numpy.random import randn
     sumouter(randn(11,3),randn(11,4),out=randn(3,4))
     sumprod(randn(11,7),randn(11,7),out=randn(7))

@@ -4,8 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-import numpy
-from pylab import mean
+import numpy as np
 
 ### inquiry functions
 
@@ -39,7 +38,7 @@ def bounds(a):
     return tuple([slice(0,a.shape[i]) for i in range(a.ndim)])
 def volume(a):
     """Return the area of the slice list."""
-    return numpy.prod([max(x.stop-x.start,0) for x in a])
+    return np.prod([max(x.stop - x.start, 0) for x in a])
 def empty(a):
     """Test whether the slice is empty."""
     return a is None or volume(a)==0
@@ -54,7 +53,7 @@ def shift(u,offsets,scale=1):
 
 def area(a):
     """Return the area of the slice list (ignores anything past a[:2]."""
-    return numpy.prod([max(x.stop-x.start,0) for x in a[:2]])
+    return np.prod([max(x.stop - x.start, 0) for x in a[:2]])
 def aspect(a):
     return height(a)*1.0/width(a)
 
@@ -88,14 +87,14 @@ def yoverlaps(u,v):
     return u[0].stop>=v[0].start and v[0].stop>=u[0].start
     
 def center1(s):
-    return mean([s[1].stop,s[1].start])
+    return np.mean([s[1].stop, s[1].start])
 def center0(s):
-    return mean([s[0].stop,s[0].start])
+    return np.mean([s[0].stop, s[0].start])
 
 def xcenter(s):
-    return mean([s[1].stop,s[1].start])
+    return np.mean([s[1].stop, s[1].start])
 def ycenter(s):
-    return mean([s[0].stop,s[0].start])
+    return np.mean([s[0].stop, s[0].start])
 def center(s):
     return (ycenter(s),xcenter(s))
 def center_in(u,v):
@@ -135,13 +134,13 @@ def cut(image,box,margin=0,bg=0,dtype=None):
     if image.ndim==3:
         assert image.shape[2]==3
         result = [cut(image[:,:,i],box,margin,bg,dtype) for i in range(image.shape[2])]
-        result = numpy.transpose(result,[1,2,0])
+        result = np.transpose(result, [1, 2, 0])
         return result
     elif image.ndim==2:
         box = pad(box,margin)
         cbox = intersect(box,bounds(image))
         if empty(cbox):
-            result = numpy.empty(dims(box),dtype=dtype)
+            result = np.empty(dims(box), dtype=dtype)
             result.ravel()[:] = bg
             return result
         cimage = image[cbox]
@@ -149,7 +148,7 @@ def cut(image,box,margin=0,bg=0,dtype=None):
             return cimage
         else:
             if dtype is None: dtype = image.dtype
-            result = numpy.empty(dims(box),dtype=dtype)
+            result = np.empty(dims(box), dtype=dtype)
             result.ravel()[:] = bg
             moved = shift(cbox,start(box),-1)
             result[moved] = cimage

@@ -2,11 +2,13 @@ from __future__ import absolute_import, division, print_function
 
 import functools
 import linecache
-import numpy
 import os
 import sys
 import warnings
 # FIXME from ... import wrap
+
+import numpy as np
+
 
 ### printing
 
@@ -16,8 +18,10 @@ def strc(arg,n=10):
         return "%.3g"%arg
     if isinstance(arg, list):
         return "[%s|%d]"%(",".join([strc(x) for x in arg[:3]]),len(arg))
-    if isinstance(arg, numpy.ndarray):
-        return "<ndarray-%x %s %s [%s,%s]>"%(id(arg),arg.shape,str(arg.dtype),numpy.amin(arg),numpy.amax(arg))
+    if isinstance(arg, np.ndarray):
+        return "<ndarray-%x %s %s [%s,%s]>" % (id(arg), arg.shape,
+                                               str(arg.dtype), np.amin(arg),
+                                               np.amax(arg))
     return str(arg).replace("\n"," ")
 
 ### debugging / tracing
@@ -146,7 +150,7 @@ def checktype(value,type_):
     # of some list element, allowing declarations like [str] or [str,unicode]
     # no recursive checks right now
     if isinstance(type_, list):
-        if not numpy.iterable(value):
+        if not np.iterable(value):
             raise CheckError("expected iterable",value)
         for x in value:
             if not any(isinstance(x, t) for t in type_):
@@ -254,24 +258,25 @@ def ARANK(n):
 def ARANGE(lo,hi):
     @makeargcheck("array values must be within [%g,%g]"%(lo,hi))
     def ARANGE_(a):
-        return numpy.amin(a)>=lo and numpy.amax(a)<=hi
+        return np.amin(a) >= lo and np.amax(a) <= hi
     return ARANGE_
 
 @makeargcheck("array elements must be non-negative")
 def ANONNEG(a):
-    return numpy.amin(a)>=0
+    return np.amin(a) >= 0
 
-float_dtypes = [numpy.dtype('float32'),numpy.dtype('float64')]
-try: float_dtypes += [numpy.dtype('float96')]
+float_dtypes = [np.dtype('float32'), np.dtype('float64')]
+try: float_dtypes += [np.dtype('float96')]
 except: pass
-try: float_dtypes += [numpy.dtype('float128')]
+try: float_dtypes += [np.dtype('float128')]
 except: pass
 
 @makeargcheck("array must contain floating point values")
 def AFLOAT(a):
     return a.dtype in float_dtypes
 
-int_dtypes = [numpy.dtype('uint8'),numpy.dtype('int32'),numpy.dtype('int64'),numpy.dtype('uint32')]
+int_dtypes = [np.dtype('uint8'), np.dtype('int32'), np.dtype('int64'),
+              np.dtype('uint32')]
 
 @makeargcheck("array must contain integer values")
 def AINT(a):
@@ -279,7 +284,7 @@ def AINT(a):
 
 @makeargcheck("expected a byte (uint8) array")
 def ABYTE(a):
-    return a.dtype==numpy.dtype('B')
+    return a.dtype == np.dtype('B')
 
 @makeargcheck("expect tuple of int")
 def inttuple(a):
@@ -327,12 +332,12 @@ AFLOAT3 = ALL(ARANK(3),AFLOAT)
 
 @makeargcheck("expected a boolean array or an array of 0/1")
 def ABINARY(a):
-    if a.ndim==2 and a.dtype==numpy.dtype(bool): return 1
+    if a.ndim == 2 and a.dtype == np.dtype(bool): return 1
     if not a.dtype in int_dtypes: return 0
     import scipy.ndimage.measurements
     zeros,ones = scipy.ndimage.measurements.sum(1,a,[0,1])
     if zeros+ones == a.size: return 1
-    if a.dtype==numpy.dtype('B'):
+    if a.dtype == np.dtype('B'):
         zeros,ones = scipy.ndimage.measurements.sum(1,a,[0,255])
         if zeros+ones == a.size: return 1
     return 0
@@ -358,10 +363,10 @@ RGBA = ALL(ARANK(3),ABYTE,CHANNELS(4))
 
 @makeargcheck("expect a light image (median>mean)",warning=1)
 def LIGHT(a):
-    return numpy.median(a)>=numpy.mean(a)
+    return np.median(a) >= np.mean(a)
 @makeargcheck("expect a dark image (median<mean)",warning=1)
 def DARK(a):
-    return numpy.median(a)<=numpy.mean(a)
+    return np.median(a) <= np.mean(a)
 @makeargcheck("expect a page image (larger than 600x600)",warning=1)
 def PAGE(a):
     return a.ndim==2 and a.shape[0]>=600 and a.shape[1]>=600
@@ -388,16 +393,17 @@ def PATCH(a):
 
 @makeargcheck("expected a segmentation image")
 def SEGMENTATION(a):
-    return isinstance(a,numpy.ndarray) and a.ndim==2 and a.dtype in ['int32','int64']
+    return (isinstance(a, np.ndarray) and a.ndim == 2 and
+            a.dtype in ['int32', 'int64'])
 @makeargcheck("expected a segmentation with white background")
 def WHITESEG(a):
-    return numpy.amax(a)==0xffffff
+    return np.amax(a) == 0xffffff
 @makeargcheck("expected a segmentation with black background")
 def BLACKSEG(a):
-    return numpy.amax(a)<0xffffff
+    return np.amax(a) < 0xffffff
 @makeargcheck("all non-zero pixels in a page segmentation must have a column value >0")
 def PAGEEXTRA(a):
-    u = numpy.unique(a)
+    u = np.unique(a)
     u = u[u!=0]
     u = u[(u&0xff0000)==0]
     return len(u)==0
@@ -411,7 +417,7 @@ LIGHTLINESEG = ALL(SEGMENTATION,WHITESEG,LINE)
 ### special types for pattern recognition
 
 def TDATASET(a):
-    if not isinstance(a[0], numpy.ndarray):
+    if not isinstance(a[0], np.ndarray):
         raise CheckError("dataset fails to yield ndarray on subscripting")
 def DATASET_SIZE(lo=3,hi=int(1e9)):
     @makeargcheck("data set size should be between %s and %s"%(lo,hi))
@@ -432,7 +438,7 @@ def DATASET_VRANGE(lo,hi):
     @makeargcheck("data set values should be in the range of %g to %g"%(lo,hi))
     def DSVRANGE_(a):
         # just a quick sanity check
-        return numpy.amin(a[0])>=lo and numpy.amax(a[0])<=hi
+        return np.amin(a[0]) >= lo and np.amax(a[0]) <= hi
     return DSVRANGE_
 
 def DATASET(size0=3,size1=int(1e9),vsize0=2,vsize1=100000,vrank=-1,vrange0=-300,vrange1=300,fixedshape=0):

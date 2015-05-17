@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from numpy import dtype
+import numpy as np
 import tables
 import re
 
@@ -22,11 +22,11 @@ def table_copy(source,dest,names=None,omit=[],verbose=1):
         dest.flush()
         
 def assign_array(db,name,a,verbose=1):
-    if a.dtype==dtype('int32'):
+    if a.dtype == np.dtype('int32'):
         atom = tables.Int32Atom()
-    elif a.dtype==dtype('int64'):
+    elif a.dtype == np.dtype('int64'):
         atom = tables.Int64Atom()
-    elif a.dtype==dtype('f') or a.dtype==dtype('d'):
+    elif a.dtype == np.dtype('f') or a.dtype == np.dtype('d'):
         atom = tables.Float32Atom()
     else:
         raise Exception('unknown array type: %s'%a.dtype)

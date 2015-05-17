@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 import re
-from pylab import uint32
+import numpy as np
 
 ### These aren't formal ligatures, they are character pairs
 ### that are frequently touching in Latin script documents.
@@ -75,7 +75,7 @@ class LigatureTable:
     def writeText(self,name):
         with open(name,"w") as stream:
             for name,code in self.lig2code.items():
-                stream.write("%s %d\n"%(name,uint32(code)))
+                stream.write("%s %d\n" % (name, np.uint32(code)))
                     
 lig = LigatureTable()
 ligcode = 0x200000
