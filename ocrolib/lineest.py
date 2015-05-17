@@ -3,8 +3,8 @@ from __future__ import absolute_import, division, print_function
 import os
 
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.ndimage import interpolation,filters
-from pylab import *
 
 from .toplevel import *
 
@@ -42,10 +42,10 @@ class CenterNormalizer:
         self.mad = np.mean(deltas[line != 0])
         self.r = int(1+self.range*self.mad)
         if self.debug:
-            figure("center")
-            imshow(line,cmap=cm.gray)
-            plot(self.center)
-            ginput(1,1000)
+            plt.figure("center")
+            plt.imshow(line, cmap=plt.cm.gray)
+            plt.plot(self.center)
+            plt.ginput(1, 1000)
     def dewarp(self, img, cval=0, dtype=np.dtype('f')):
         assert img.shape==self.shape
         h,w = img.shape

@@ -4,13 +4,13 @@ from __future__ import absolute_import, division, print_function
 
 import traceback
 import codecs
-from pylab import *
 import os.path
 import ocrolib
 import argparse
+import sys
 
 import numpy as np
-import matplotlib
+import matplotlib.pyplot as plt
 from multiprocessing import Pool
 from ocrolib import edist
 from collections import Counter
@@ -205,44 +205,53 @@ def process1(arg):
     ocrolib.write_text(base+".txt",pred)
 
     if args.show>0 or args.save is not None:
-        ion()
-        matplotlib.rc('xtick',labelsize=7)
-        matplotlib.rc('ytick',labelsize=7)
-        matplotlib.rcParams.update({"font.size":7})
+        plt.ion()
+        plt.rc('xtick', labelsize=7)
+        plt.rc('ytick', labelsize=7)
+        plt.rcParams.update({'font.size': 7})
         if os.path.exists(base+".gt.txt"):
             transcript = ocrolib.read_text(base+".gt.txt")
             transcript = ocrolib.normalize_text(transcript)
         else:
             transcript = pred
         pred2 = network.trainString(line,transcript,update=0)
-        figure("result",figsize=(1400//75,800//75),dpi=75)
-        clf()
-        subplot(311)
-        imshow(line.T,cmap=cm.gray)
-        title(transcript)
-        subplot(312)
-        gca().set_xticks([])
-        imshow(network.outputs.T[1:],vmin=0,cmap=cm.hot)
-        title(pred[:80])
-        subplot(313)
-        plot(network.outputs[:,0],color='yellow',linewidth=3,alpha=0.5)
-        plot(network.outputs[:,1],color='green',linewidth=3,alpha=0.5)
-        plot(np.amax(network.outputs[:, 2:], axis=1),
-             color='blue', linewidth=3, alpha=0.5)
-        plot(network.aligned[:,0],color='orange',linestyle='dashed',alpha=0.7)
-        plot(network.aligned[:,1],color='green',linestyle='dashed',alpha=0.5)
-        plot(np.amax(network.aligned[:, 2:], axis=1),
-             color='blue', linestyle='dashed', alpha=0.5)
+
+        plt.figure('result', figsize=(1400 // 75, 800 // 75), dpi=75)
+        plt.clf()
+
+        plt.subplot(311)
+        plt.imshow(line.T, cmap=plt.cm.gray)
+        plt.title(transcript)
+
+        plt.subplot(312)
+        plt.gca().set_xticks([])
+        plt.imshow(network.outputs.T[1:], vmin=0, cmap=plt.cm.hot)
+        plt.title(pred[:80])
+
+        plt.subplot(313)
+        plt.plot(network.outputs[:, 0],
+                 color='yellow', linewidth=3, alpha=0.5)
+        plt.plot(network.outputs[:, 1],
+                 color='green', linewidth=3, alpha=0.5)
+        plt.plot(np.amax(network.outputs[:, 2:], axis=1),
+                 color='blue', linewidth=3, alpha=0.5)
+        plt.plot(network.aligned[:, 0],
+                 color='orange', linestyle='dashed',alpha=0.7)
+        plt.plot(network.aligned[:, 1],
+                 color='green', linestyle='dashed', alpha=0.5)
+        plt.plot(np.amax(network.aligned[:, 2:], axis=1),
+                 color='blue', linestyle='dashed', alpha=0.5)
+
         if args.save is not None:
-            draw()
+            plt.draw()
             savename = args.save
             if "%" in savename: savename = savename%trial
             print("saving", savename)
-            savefig(savename,bbox_inches=0)
+            plt.savefig(savename, bbox_inches=0)
         if trial==len(inputs)-1:
-            ginput(1,99999999)
+            plt.ginput(1, 99999999)
         else:
-            ginput(1,args.show)
+            plt.ginput(1, args.show)
     return None
 
 def safe_process1(arg):

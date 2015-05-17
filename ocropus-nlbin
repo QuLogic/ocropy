@@ -2,10 +2,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pylab import *
 import argparse,os,os.path
+import sys
 
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.ndimage import filters,interpolation,morphology,measurements
 from scipy import stats
 import multiprocessing
@@ -76,8 +77,8 @@ def estimate_skew_angle(image,angles):
         v = np.var(v)
         estimates.append((v,a))
     if args.debug>0:
-        plot([y for x,y in estimates],[x for x,y in estimates])
-        ginput(1,args.debug)
+        plt.plot([y for x, y in estimates], [x for x, y in estimates])
+        plt.ginput(1, args.debug)
     _,a = max(estimates)
     return a
     
@@ -98,7 +99,11 @@ def A(s): return W(s)*H(s)
 
 def dshow(image,info):
     if args.debug<=0: return
-    ion(); gray(); imshow(image); title(info); ginput(1,args.debug)
+    plt.ion()
+    plt.gray()
+    plt.imshow(image)
+    plt.title(info)
+    plt.ginput(1, args.debug)
 
 def process1(job):
     fname,i = job
@@ -135,10 +140,16 @@ def process1(job):
         m = filters.percentile_filter(m,args.perc,size=(args.range,2))
         m = filters.percentile_filter(m,args.perc,size=(2,args.range))
         m = interpolation.zoom(m,1.0/args.zoom)
-        if args.debug>0: clf(); imshow(m,vmin=0,vmax=1); ginput(1,args.debug)
+        if args.debug > 0:
+            plt.clf()
+            plt.imshow(m, vmin=0, vmax=1)
+            plt.ginput(1, args.debug)
         w,h = np.minimum(np.array(image.shape), np.array(m.shape))
         flat = np.clip(image[:w, :h] - m[:w, :h] + 1, 0, 1)
-        if args.debug>0: clf(); imshow(flat,vmin=0,vmax=1); ginput(1,args.debug)
+        if args.debug > 0:
+            plt.clf()
+            plt.imshow(flat, vmin=0, vmax=1)
+            plt.ginput(1, args.debug)
 
     # estimate skew angle and rotate
     if args.maxskew>0:
@@ -171,7 +182,9 @@ def process1(job):
         v = (v > 0.3 * np.amax(v))
         v = morphology.binary_dilation(v, structure=np.ones((e * 50, 1)))
         v = morphology.binary_dilation(v, structure=np.ones((1, e * 50)))
-        if args.debug>0: imshow(v); ginput(1,args.debug)
+        if args.debug > 0:
+            plt.imshow(v)
+            plt.ginput(1, args.debug)
         est = est[v]
     lo = stats.scoreatpercentile(est.ravel(),args.lo)
     hi = stats.scoreatpercentile(est.ravel(),args.hi)
@@ -181,13 +194,19 @@ def process1(job):
     flat -= lo
     flat /= (hi-lo)
     flat = np.clip(flat, 0, 1)
-    if args.debug>0: imshow(flat,vmin=0,vmax=1); ginput(1,args.debug)
+    if args.debug > 0:
+        plt.imshow(flat, vmin=0, vmax=1)
+        plt.ginput(1, args.debug)
     bin = 1*(flat>args.threshold)
 
     # output the normalized grayscale and the thresholded images
     print(fname, "lo-hi (%.2f %.2f) angle %4.1f" % (lo, hi, angle), comment)
     if args.parallel<2: print("writing")
-    if args.debug>0 or args.show: clf(); gray();imshow(bin); ginput(1,max(0.1,args.debug))
+    if args.debug > 0 or args.show:
+        plt.clf()
+        plt.gray()
+        plt.imshow(bin)
+        plt.ginput(1, max(0.1, args.debug))
     if args.output:
         if args.rawcopy: ocrolib.write_image_gray(args.output+"/%04d.raw.png"%i,raw)
         ocrolib.write_image_binary(args.output+"/%04d.bin.png"%i,bin)

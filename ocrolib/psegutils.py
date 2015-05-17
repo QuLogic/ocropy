@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
-from pylab import *
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from scipy.ndimage import filters,interpolation
 
 from .toplevel import *
@@ -142,8 +143,13 @@ def reading_order(lines,highlight=None,debug=0):
         if w[0].stop<min(u[0].start,v[0].start): return 0
         if w[0].start>max(u[0].stop,v[0].stop): return 0
         if w[1].start<u[1].stop and w[1].stop>v[1].start: return 1
+
     if highlight is not None:
-        clf(); title("highlight"); imshow(binary); ginput(1,debug)
+        plt.clf()
+        plt.title("highlight")
+        plt.imshow(binary)
+        plt.ginput(1, debug)
+
     for i,u in enumerate(lines):
         for j,v in enumerate(lines):
             if x_overlaps(u,v):
@@ -156,10 +162,10 @@ def reading_order(lines,highlight=None,debug=0):
                 print((i, j), end=' ')
                 y0,x0 = sl.center(lines[i])
                 y1,x1 = sl.center(lines[j])
-                plot([x0,x1+200],[y0,y1])
+                plt.plot([x0, x1 + 200], [y0, y1])
     if highlight is not None:
         print()
-        ginput(1,debug)
+        plt.ginput(1, debug)
     return order
 
 def topsort(order):
@@ -183,16 +189,18 @@ def show_lines(image,lines,lsort):
     """Overlays the computed lines on top of the image, for debugging
     purposes."""
     ys,xs = [],[]
-    clf(); cla()
-    imshow(image)
+    plt.clf(); plt.cla()
+    plt.imshow(image)
     for i in range(len(lines)):
         l = lines[lsort[i]]
         y,x = sl.center(l.bounds)
         xs.append(x)
         ys.append(y)
         o = l.bounds
-        r = matplotlib.patches.Rectangle((o[1].start,o[0].start),edgecolor='r',fill=0,width=sl.dim1(o),height=sl.dim0(o))
-        gca().add_patch(r)
+        r = mpatches.Rectangle((o[1].start, o[0].start), edgecolor='r', fill=0,
+                               width=sl.dim1(o), height=sl.dim0(o))
+        plt.gca().add_patch(r)
     h,w = image.shape
-    ylim(h,0); xlim(0,w)
-    plot(xs,ys)
+    plt.ylim(h, 0)
+    plt.xlim(0, w)
+    plt.plot(xs, ys)

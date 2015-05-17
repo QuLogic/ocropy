@@ -3,14 +3,13 @@
 from __future__ import absolute_import, division, print_function
 
 import glob
-import matplotlib
-matplotlib.use("AGG")
 import sys,os,signal
 
 import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
 from scipy.ndimage import interpolation
-import pylab
-from pylab import *
 import ocrolib
 from ocrolib import morph
 from scipy.misc import imsave
@@ -36,7 +35,7 @@ def write_cseg(stream,cseg_file):
     stream.write("<table><tr>")
     for i,c in enumerate(csegs):
         out = ".__"+cseg_file+"_%03d.png"%i
-        pylab.imsave(out, np.amax(c.img) - c.img, cmap=cm.gray)
+        plt.imsave(out, np.amax(c.img) - c.img, cmap=plt.cm.gray)
         stream.write("<td><img src=%s height=%d style='border: 1px #ccccff solid;'></td>"%(out,max(2,c.img.shape[0]//2)))
     stream.write("</tr></table>")
     stream.write("\n")
@@ -75,10 +74,10 @@ def genpage(d):
                 rseg_file = ocrolib.fvariant(img,"rseg")
                 if os.path.exists(rseg_file):
                     rseg = ocrolib.read_line_segmentation(rseg_file)
-                    figure(figsize=(20,1),dpi=150)
+                    plt.figure(figsize=(20, 1), dpi=150)
                     morph.showlabels(rseg)
                     figfile = ".__"+rseg_file+"_.png"
-                    savefig(figfile)
+                    plt.savefig(figfile)
                     stream.write("<img height='50' src='%s'><br>\n"%figfile)
                 stream.write("<hr>\n")
     finally:

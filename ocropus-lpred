@@ -2,20 +2,21 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pylab import *
 import ocrolib
 import argparse
-import matplotlib
+
 import numpy as np
+import matplotlib.pyplot as plt
+
 from ocrolib import lineest
 import ocrolib.lstm as lstm
 from ocrolib import edist
 import clstm
-ion()
-matplotlib.rc('xtick',labelsize=7)
-matplotlib.rc('ytick',labelsize=7)
-matplotlib.rcParams.update({"font.size":7})
 
+plt.ion()
+plt.rc('xtick', labelsize=7)
+plt.rc('ytick', labelsize=7)
+plt.rcParams.update({'font.size': 7})
 
 np.seterr(divide='raise', over='raise', invalid='raise', under='ignore')
 

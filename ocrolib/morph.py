@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import pylab
+import matplotlib.pyplot as plt
 from scipy.ndimage import morphology,measurements,filters
 
 from .toplevel import *
@@ -123,7 +123,7 @@ def rg_closing(image,size,origin=0):
 
 @checks(SEGMENTATION)
 def showlabels(x,n=7):
-    pylab.imshow(np.where(x > 0, x % n + 1, 0), cmap=pylab.cm.gist_stern)
+    plt.imshow(np.where(x > 0, x % n + 1, 0), cmap=plt.cm.gist_stern)
 
 @checks(SEGMENTATION)
 def spread_labels(labels,maxdist=9999999):

@@ -26,11 +26,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pylab import *
 from collections import defaultdict
 import unicodedata
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from . import common as ocrolib
 from ocrolib.native import *
@@ -819,9 +819,15 @@ def ctc_align_targets(outputs,targets,threshold=100.0,verbose=0,debug=0,lo=1e-5)
     lmatch = np.log(match)
 
     if debug:
-        figure("ctcalign"); clf();
-        subplot(411); imshow(outputs.T,interpolation='nearest',cmap=cm.hot)
-        subplot(412); imshow(lmatch.T,interpolation='nearest',cmap=cm.hot)
+        plt.figure('ctcalign')
+        plt.clf()
+
+        plt.subplot(411)
+        plt.imshow(outputs.T, interpolation='nearest', cmap=plt.cm.hot)
+
+        plt.subplot(412)
+        plt.imshow(lmatch.T, interpolation='nearest', cmap=plt.cm.hot)
+
     assert not np.isnan(lmatch).any()
 
     # Now, we compute a forward-backward algorithm over the matches between
@@ -845,9 +851,14 @@ def ctc_align_targets(outputs,targets,threshold=100.0,verbose=0,debug=0,lo=1e-5)
     aligned /= np.where(l == 0.0, 1e-9, l)
 
     if debug:
-        subplot(413); imshow(epath.T,cmap=cm.hot,interpolation='nearest')
-        subplot(414); imshow(aligned.T,cmap=cm.hot,interpolation='nearest')
-        ginput(1,0.01);
+        plt.subplot(413)
+        plt.imshow(epath.T, cmap=plt.cm.hot, interpolation='nearest')
+
+        plt.subplot(414)
+        plt.imshow(aligned.T, cmap=plt.cm.hot, interpolation='nearest')
+
+        plt.ginput(1, 0.01)
+
     return aligned
 
 def normalize_nfkc(s):

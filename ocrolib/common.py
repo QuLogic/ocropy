@@ -14,10 +14,10 @@ import inspect
 import glob
 
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from scipy.ndimage import morphology
 import multiprocessing
-import pylab
-from pylab import imshow
 
 from . import ligatures
 from . import morph
@@ -875,20 +875,21 @@ def binarize_range(image,dtype='B',threshold=0.5):
 
 def draw_pseg(pseg,axis=None):
     if axis is None:
-        axis = subplot(111)
+        axis = plt.subplot(111)
     h = pseg.dim(1)
     regions = ocropy.RegionExtractor()
     regions.setPageLines(pseg)
     for i in range(1,regions.length()):
         x0,y0,x1,y1 = (regions.x0(i),regions.y0(i),regions.x1(i),regions.y1(i))
-        p = patches.Rectangle((x0,h-y1-1),x1-x0,y1-y0,edgecolor="red",fill=0)
+        p = mpatches.Rectangle((x0, h - y1 - 1), x1 - x0, y1 - y0,
+                               edgecolor="red", fill=0)
         axis.add_patch(p)
 
 def draw_aligned(result,axis=None):
     raise NotImplementedError("FIXME draw_aligned")
     if axis is None:
-        axis = subplot(111)
-    axis.imshow(NI(result.image),cmap=cm.gray)
+        axis = plt.subplot(111)
+    axis.imshow(NI(result.image), cmap=plt.cm.gray)
     cseg = result.cseg
     if isinstance(cseg, np.ndarray): cseg = common.lseg2narray(cseg)
     ocropy.make_line_segmentation_black(cseg)
@@ -900,42 +901,46 @@ def draw_aligned(result,axis=None):
     for i in range(1,bboxes.length()):
         r = bboxes.at(i)
         x0,y0,x1,y1 = (r.x0,r.y0,r.x1,r.y1)
-        p = patches.Rectangle((x0,h-y1-1),x1-x0,y1-y0,edgecolor=(0.0,0.0,1.0,0.5),fill=0)
+        p = mpatches.Rectangle((x0, h - y1 - 1), x1 - x0, y1 - y0,
+                               edgecolor=(0.0, 0.0, 1.0, 0.5), fill=0)
         axis.add_patch(p)
         if i>0 and i-1<len(s):
             axis.text(x0,h-y0-1,s[i-1],color="red",weight="bold",fontsize=14)
-    draw()
+    plt.draw()
 
 def plotgrid(data,d=10,shape=(30,30)):
     """Plot a list of images on a grid."""
-    ion()
-    gray()
-    clf()
+    plt.ion()
+    plt.gray()
+    plt.clf()
     for i in range(min(d*d,len(data))):
-        subplot(d,d,i+1)
+        plt.subplot(d, d, i + 1)
         row = data[i]
         if shape is not None: row = row.reshape(shape)
-        imshow(row)
-    ginput(1,timeout=0.1)
+        plt.imshow(row)
+    plt.ginput(1, timeout=0.1)
 
 def showrgb(r,g=None,b=None):
     if g is None: g = r
     if b is None: b = r
-    imshow(np.array([r, g, b]).transpose([1, 2, 0]))
+    plt.imshow(np.array([r, g, b]).transpose([1, 2, 0]))
 
 def showgrid(l,cols=None,n=400,titles=None,xlabels=None,ylabels=None,**kw):
-    if "cmap" not in kw: kw["cmap"] = pylab.cm.gray
+    if "cmap" not in kw: kw["cmap"] = plt.cm.gray
     if "interpolation" not in kw: kw["interpolation"] = "nearest"
     n = min(n,len(l))
     if cols is None: cols = int(np.sqrt(n))
     rows = (n+cols-1)//cols
     for i in range(n):
-        pylab.xticks([]); pylab.yticks([])
-        pylab.subplot(rows,cols,i+1)
-        pylab.imshow(l[i],**kw)
-        if titles is not None: pylab.title(str(titles[i]))
-        if xlabels is not None: pylab.xlabel(str(xlabels[i]))
-        if ylabels is not None: pylab.ylabel(str(ylabels[i]))
+        plt.xticks([])
+        plt.yticks([])
+
+        plt.subplot(rows, cols, i + 1)
+        plt.imshow(l[i], **kw)
+
+        if titles is not None: plt.title(str(titles[i]))
+        if xlabels is not None: plt.xlabel(str(xlabels[i]))
+        if ylabels is not None: plt.ylabel(str(ylabels[i]))
 
 def gt_explode(s):
     l = re.split(r'_(.{1,4})_',s)

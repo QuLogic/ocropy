@@ -4,11 +4,12 @@ from __future__ import absolute_import, division, print_function
 
 import random as pyrandom
 import re
-from pylab import *
 import ocrolib
 import argparse
-import matplotlib
+import sys
+
 import numpy as np
+import matplotlib.pyplot as plt
 from ocrolib import lineest
 import ocrolib.lstm as lstm
 import traceback
@@ -208,42 +209,53 @@ if args.updates: network.lstm.verbose = 1
 
 # used for plotting
 
-ion()
-matplotlib.rc('xtick',labelsize=7)
-matplotlib.rc('ytick',labelsize=7)
-matplotlib.rcParams.update({"font.size":7})
+plt.ion()
+plt.rc('xtick', labelsize=7)
+plt.rc('ytick', labelsize=7)
+plt.rcParams.update({'font.size': 7})
 
 def cleandisp(s):
     return re.sub('[$]',r'#',s)
 
 def plot_network_info(network,transcript,pred,gta):
-    subplot(511)
-    imshow(line.T,cmap=cm.gray)
-    title(cleandisp(transcript))
-    subplot(512)
-    gca().set_xticks([])
-    imshow(network.outputs.T[1:],vmin=0,cmap=cm.hot)
-    title(cleandisp(pred[:len(transcript)]))
-    subplot(513)
-    imshow(network.aligned.T[1:],vmin=0,cmap=cm.hot)
-    title(cleandisp(gta[:len(transcript)]))
-    subplot(514)
-    plot(network.outputs[:,0],color='yellow',linewidth=3,alpha=0.5)
-    plot(network.outputs[:,1],color='green',linewidth=3,alpha=0.5)
-    plot(np.amax(network.outputs[:, 2:], axis=1),
-         color='blue', linewidth=3, alpha=0.5)
-    plot(network.aligned[:,0],color='orange',linestyle='dashed',alpha=0.7)
-    plot(network.aligned[:,1],color='green',linestyle='dashed',alpha=0.5)
-    plot(np.amax(network.aligned[:, 2:], axis=1),
-         color='blue', linestyle='dashed', alpha=0.5)
-    subplot(515)
-    gca().set_yscale('log')
+    plt.subplot(511)
+    plt.imshow(line.T, cmap=plt.cm.gray)
+    plt.title(cleandisp(transcript))
+
+    plt.subplot(512)
+    plt.gca().set_xticks([])
+    plt.imshow(network.outputs.T[1:], vmin=0, cmap=plt.cm.hot)
+    plt.title(cleandisp(pred[:len(transcript)]))
+
+    plt.subplot(513)
+    plt.imshow(network.aligned.T[1:], vmin=0, cmap=plt.cm.hot)
+    plt.title(cleandisp(gta[:len(transcript)]))
+
+    plt.subplot(514)
+    plt.plot(network.outputs[:, 0],
+             color='yellow', linewidth=3, alpha=0.5)
+    plt.plot(network.outputs[:, 1],
+             color='green', linewidth=3, alpha=0.5)
+    plt.plot(np.amax(network.outputs[:, 2:], axis=1),
+             color='blue', linewidth=3, alpha=0.5)
+    plt.plot(network.aligned[:, 0],
+             color='orange', linestyle='dashed', alpha=0.7)
+    plt.plot(network.aligned[:, 1],
+             color='green', linestyle='dashed', alpha=0.5)
+    plt.plot(np.amax(network.aligned[:, 2:], axis=1),
+             color='blue', linestyle='dashed', alpha=0.5)
+
+    plt.subplot(515)
+    plt.gca().set_yscale('log')
     r = 10000
     errs = network.errors(range=r,smooth=100)
     xs = np.arange(len(errs)) + network.last_trial - len(errs)
-    plot(xs,errs,color='black')
-    plot(xs,network.errors(range=r),color='black',alpha=0.4)
-    plot(xs,network.cerrors(range=r,smooth=100),color='red',linestyle='dashed')
+    plt.plot(xs, errs,
+             color='black')
+    plt.plot(xs, network.errors(range=r),
+             color='black', alpha=0.4)
+    plt.plot(xs, network.cerrors(range=r, smooth=100),
+             color='red', linestyle='dashed')
 
 start = args.start if args.start>=0 else network.last_trial
 
@@ -313,12 +325,12 @@ for trial in range(start,args.ntrain):
         last_save = ofile
 
     if do_display:
-        figure("training",figsize=(1400//75,800//75),dpi=75)
-        clf()
-        gcf().canvas.set_window_title(args.output)
+        plt.figure('training', figsize=(1400 // 75, 800 // 75), dpi=75)
+        plt.clf()
+        plt.gcf().canvas.set_window_title(args.output)
         plot_network_info(network,transcript,pred,gta)
-        ginput(1,0.01)
+        plt.ginput(1, 0.01)
         if args.movie is not None:
-            draw()
-            savefig("%s-%08d.png"%(args.movie,trial),bbox_inches=0)
+            plt.draw()
+            plt.savefig("%s-%08d.png" % (args.movie, trial), bbox_inches=0)
 

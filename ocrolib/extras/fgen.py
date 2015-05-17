@@ -7,8 +7,7 @@ from __future__ import absolute_import, division, print_function
 import cairo
 from cairoextras import *
 import numpy as np
-from scipy import *
-from pylab import *
+import matplotlib.pyplot as plt
 import pango,pangocairo
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import distance_transform_edt,binary_erosion,binary_dilation
@@ -167,8 +166,8 @@ def gauss_distort(images,maxdelta=2.0,sigma=10.0):
 
 if __name__=="__main__":
     # print(sorted(pango_families()))
-    ion()
-    show()
+    plt.ion()
+    plt.show()
     while 1:
         image = pango_render_string("A",spec="Arial",size=24,pad=20,scale=4.0)
         image = np.average(image, axis=2)
@@ -176,9 +175,10 @@ if __name__=="__main__":
             for j in range(7):
                 noise = gauss_degrade(image,margin=(i-2)*0.5,noise=j*0.2)
                 noise = gauss_distort([noise],maxdelta=1.0)[0]
-                gray()
-                subplot(7,7,7*i+j+1); imshow(noise)
-                draw()
+                plt.gray()
+                plt.subplot(7, 7, 7 * i + j + 1)
+                plt.imshow(noise)
+                plt.draw()
         raw_input()
 
 def cairo_render_at(s,loc=None,shape=None,
@@ -237,13 +237,16 @@ def cairo_render_at(s,loc=None,shape=None,
 
 if __name__=="x__main__":
     s = u"hello, world: \u00E4\u0182\u03c0\u4eb0"
-    subplot(311)
-    imshow(cairo_render_string(s,fontname="Georgia",size=99,fg=(0.9,0.7,0.1),bg=(0.0,0.0,0.5)))
-    subplot(312)
-    font = "/usr/share/fonts/truetype/ttf-sil-gentium/GenR102.ttf"
-    imshow(cairo_render_string(s,fontfile=font,size=70))
-    subplot(313)
-    font = "/usr/share/fonts/truetype/takao/TakaoPGothic.ttf"
-    imshow(cairo_render_string(s,fontfile=font,size=70))
-    show()
+    plt.subplot(311)
+    plt.imshow(cairo_render_string(s, fontname="Georgia", size=99,
+                                   fg=(0.9, 0.7, 0.1), bg=(0.0, 0.0, 0.5)))
 
+    plt.subplot(312)
+    font = "/usr/share/fonts/truetype/ttf-sil-gentium/GenR102.ttf"
+    plt.imshow(cairo_render_string(s, fontfile=font, size=70))
+
+    plt.subplot(313)
+    font = "/usr/share/fonts/truetype/takao/TakaoPGothic.ttf"
+    plt.imshow(cairo_render_string(s, fontfile=font, size=70))
+
+    plt.show()

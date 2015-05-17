@@ -7,7 +7,7 @@ import random as pyrandom
 import sys,os,re,glob,argparse,codecs
 
 import numpy as np
-from pylab import imread
+from matplotlib.pyplot import imread
 
 import ocrolib
 from ocrolib import hocr

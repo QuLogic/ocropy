@@ -3,18 +3,21 @@
 from __future__ import absolute_import, division, print_function
 
 import re
-from pylab import *
+import sys
 import ocrolib
 import argparse
-import matplotlib
+
 import numpy as np
+import matplotlib.pyplot as plt
+
 from ocrolib import lineest
 import ocrolib.lstm as lstm
 import clstm
-ion()
-matplotlib.rc('xtick',labelsize=7)
-matplotlib.rc('ytick',labelsize=7)
-matplotlib.rcParams.update({"font.size":7})
+
+plt.ion()
+plt.rc('xtick', labelsize=7)
+plt.rc('ytick', labelsize=7)
+plt.rcParams.update({'font.size': 7})
 
 
 np.seterr(divide='raise', over='raise', invalid='raise', under='ignore')
@@ -114,17 +117,23 @@ for trial in range(args.start,args.ntrain):
         print("   ALN:", repr(gta[:len(transcript)+5]))
         print("   OUT:", repr(pred[:len(transcript)+5]))
         if trial%20==0:
-            clf()
-            subplot(311)
-            title(cleandisp(transcript))
-            imshow(line.T,cmap=cm.gray,interpolation='bilinear')
-            subplot(312)
-            title(cleandisp(gta))
-            imshow(aligned.T,cmap=cm.hot,interpolation='bilinear',aspect='auto')
-            subplot(313)
-            title(cleandisp(pred))
-            imshow(outputs.T,cmap=cm.hot,interpolation='bilinear',aspect='auto')
-            tight_layout()
-        ginput(1,0.01)
+            plt.clf()
+            plt.subplot(311)
+            plt.title(cleandisp(transcript))
+            plt.imshow(line.T, cmap=plt.cm.gray, interpolation='bilinear')
+
+            plt.subplot(312)
+            plt.title(cleandisp(gta))
+            plt.imshow(aligned.T, cmap=plt.cm.hot, interpolation='bilinear',
+                       aspect='auto')
+
+            plt.subplot(313)
+            plt.title(cleandisp(pred))
+            plt.imshow(outputs.T, cmap=plt.cm.hot, interpolation='bilinear',
+                       aspect='auto')
+
+            plt.tight_layout()
+
+        plt.ginput(1, 0.01)
     except Exception as e:
         print(e)
