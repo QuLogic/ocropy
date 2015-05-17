@@ -527,19 +527,6 @@ class Record:
         return self
 
 ################################################################
-### Histograms
-################################################################
-
-def chist(l):
-    """Simple counting histogram.  Takes a list of items
-    and returns a list of (count,object) tuples."""
-    counts = {}
-    for c in l:
-        counts[c] = counts.get(c,0)+1
-    hist = [(v,k) for k,v in counts.items()]
-    return sorted(hist,reverse=1)
-
-################################################################
 ### multiprocessing
 ################################################################
 
