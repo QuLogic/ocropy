@@ -32,12 +32,6 @@ class OcropusException(Exception):
     def __init__(self,*args,**kw):
         Exception.__init__(self,*args,**kw)
 
-class Unimplemented(OcropusException):
-    trace = 1
-    "Exception raised when a feature is unimplemented."
-    def __init__(self,s):
-        Exception.__init__(self,inspect.stack()[1][3])
-
 class Internal(OcropusException):
     trace = 1
     "Exception raised when a feature is unimplemented."
@@ -969,7 +963,7 @@ def draw_pseg(pseg,axis=None):
         axis.add_patch(p)
 
 def draw_aligned(result,axis=None):
-    raise Unimplemented("FIXME draw_aligned")
+    raise NotImplementedError("FIXME draw_aligned")
     if axis is None:
         axis = subplot(111)
     axis.imshow(NI(result.image),cmap=cm.gray)
