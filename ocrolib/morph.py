@@ -246,11 +246,6 @@ def renumber_labels(a):
     """Alias for renumber_labels_ordered"""
     return renumber_labels_ordered(a)
 
-def pyargsort(seq,cmp=cmp,key=lambda x:x):
-    """Like numpy's argsort, but using the builtin Python sorting
-    function.  Takes an optional cmp."""
-    return sorted(range(len(seq)),key=lambda x:key(seq.__getitem__(x)),cmp=cmp)
-
 @checks(SEGMENTATION)
 def renumber_by_xcenter(seg):
     """Given a segmentation (as a color image), change the labels
