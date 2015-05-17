@@ -79,16 +79,6 @@ class FileNotFound(OcropusException):
 
 pickle_mode = 2
 
-def deprecated(f):
-    def _wrap(f):
-        warned = 0
-        def _wrapper(*args,**kw):
-            if not warned:
-                print(f, "has been DEPRECATED")
-                warned = 1
-            return f(*args,**kw)
-    return _wrap
-
 
 
 ################################################################

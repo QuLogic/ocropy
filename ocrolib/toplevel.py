@@ -20,27 +20,6 @@ def strc(arg,n=10):
         return "<ndarray-%x %s %s [%s,%s]>"%(id(arg),arg.shape,str(arg.dtype),numpy.amin(arg),numpy.amax(arg))
     return str(arg).replace("\n"," ")
 
-### deprecation warnings
-
-def deprecated(f):
-    """Prints a deprecation warning when called."""
-    @functools.wraps(f)
-    def wrapper(*args,**kw):
-        warnings.warn_explicit("calling deprecated function %s"%f.__name__,
-                               category=DeprecationWarning,
-                               filename=f.func_code.co_filename,
-                               lineno=f.func_code.co_firstlineno+1)
-        return f(*args,**kw)
-    return wrapper
-
-def failfunc(f):
-    @functools.wraps(f)
-    def wrapper(*args,**kw):
-        raise Exception("don't call %s anymore"%f)
-    return wrapper
-
-obsolete = failfunc
-
 ### debugging / tracing
 
 _trace1_depth = 0

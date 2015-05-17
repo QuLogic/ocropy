@@ -193,35 +193,3 @@ def show_lines(image,lines,lsort):
     h,w = image.shape
     ylim(h,0); xlim(0,w)
     plot(xs,ys)
-
-@obsolete
-def read_gray(fname):
-    image = imread(fname)
-    if image.ndim==3: image = mean(image,2)
-    return image
-
-@obsolete
-def read_binary(fname):
-    image = imread(fname)
-    if image.ndim==3: image = mean(image,2)
-    image -= amin(image)
-    image /= amax(image)
-    assert sum(image<0.01)+sum(image>0.99)>0.99*prod(image.shape),"input image is not binary"
-    binary = 1.0*(image<0.5)
-    return binary
-
-@obsolete
-def rgbshow(r,g,b=None,gn=1,cn=0,ab=0,**kw):
-    """Small function to display 2 or 3 images as RGB channels."""
-    if b is None: b = zeros(r.shape)
-    combo = transpose(array([r,g,b]),axes=[1,2,0])
-    if cn:
-        for i in range(3):
-            combo[:,:,i] /= max(abs(amin(combo[:,:,i])),abs(amax(combo[:,:,i])))
-    elif gn:
-        combo /= max(abs(amin(combo)),abs(amax(combo)))
-    if ab:
-        combo = abs(combo)
-    if amin(combo)<0: print("warning: values less than zero")
-    imshow(clip(combo,0,1),**kw)
-
