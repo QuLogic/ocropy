@@ -753,67 +753,6 @@ def set_params(object,kw,warn=1):
     return kw
 
 ################################################################
-### warning and logging
-################################################################
-
-def caller():
-    """Just returns info about the caller in string for (for error messages)."""
-    frame = sys._getframe(2)
-    info = inspect.getframeinfo(frame)
-    result = "%s:%d (%s)"%(info.filename,info.lineno,info.function)
-    del frame
-    return result
-
-def die(message,*args):
-    """Die with an error message."""
-    message = message%args
-    message = caller()+" FATAL "+message+"\n"
-    sys.stderr.write(message)
-    sys.exit(1)
-
-def warn(message,*args):
-    """Give a warning message."""
-    message = message%args
-    message = caller()+" WARNING "+message+"\n"
-    sys.stderr.write(message)
-
-already_warned = {}
-
-def warn_once(message,*args):
-    """Give a warning message, but just once."""
-    c = caller()
-    if c in already_warned: return
-    already_warned[c] = 1
-    message = message%args
-    message = c+" WARNING "+message+"\n"
-    sys.stderr.write(message)
-
-def quick_check_page_components(page_bin,dpi):
-    """Quickly check whether the components of page_bin are
-    reasonable.  Returns a value between 0 and 1; <0.5 means that
-    there is probably something wrong."""
-    return 1.0
-
-def quick_check_line_components(line_bin,dpi):
-    """Quickly check whether the components of line_bin are
-    reasonable.  Returns a value between 0 and 1; <0.5 means that
-    there is probably something wrong."""
-    return 1.0
-
-def deprecated(func):
-    """This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emitted
-    when the function is used."""
-    def newFunc(*args, **kwargs):
-        warnings.warn("Call to deprecated function %s." % func.__name__,
-                      category=DeprecationWarning,stacklevel=2)
-        return func(*args, **kwargs)
-    newFunc.__name__ = func.__name__
-    newFunc.__doc__ = func.__doc__
-    newFunc.__dict__.update(func.__dict__)
-    return newFunc
-
-################################################################
 ### conversion functions
 ################################################################
 
