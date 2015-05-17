@@ -1,13 +1,10 @@
 from __future__ import absolute_import, division, print_function
 
-import sys,os,re
-from scipy import stats
-from scipy.ndimage import measurements,interpolation,filters
-from pylab import *
-import argparse
+import os
 
-import ocrolib
-from . import common, morph
+from scipy.ndimage import interpolation,filters
+from pylab import *
+
 from .toplevel import *
 
 

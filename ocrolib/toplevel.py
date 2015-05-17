@@ -6,7 +6,6 @@ import numpy
 import os
 import sys
 import warnings
-from types import NoneType
 # FIXME from ... import wrap
 
 ### printing

@@ -476,8 +476,7 @@ def save_object(fname,obj,zip=0):
     if zip==0 and fname.endswith(".gz"):
         zip = 1
     if zip>0:
-        # with gzip.GzipFile(fname,"wb") as stream:
-        with os.popen("gzip -9 > '%s'"%fname,"wb") as stream:
+        with gzip.GzipFile(fname, "wb") as stream:
             cPickle.dump(obj,stream,2)
     else:
         with open(fname,"wb") as stream:
@@ -502,8 +501,7 @@ def load_object(fname,zip=0,nofind=0,verbose=0):
     if zip==0 and fname.endswith(".gz"):
         zip = 1
     if zip>0:
-        # with gzip.GzipFile(fname,"rb") as stream:
-        with os.popen("gunzip < '%s'"%fname,"rb") as stream:
+        with gzip.GzipFile(fname, "rb") as stream:
             unpickler = cPickle.Unpickler(stream)
             unpickler.find_global = unpickle_find_global
             return unpickler.load()
@@ -1002,7 +1000,6 @@ def showrgb(r,g=None,b=None):
     imshow(array([r,g,b]).transpose([1,2,0]))
 
 def showgrid(l,cols=None,n=400,titles=None,xlabels=None,ylabels=None,**kw):
-    import pylab
     if "cmap" not in kw: kw["cmap"] = pylab.cm.gray
     if "interpolation" not in kw: kw["interpolation"] = "nearest"
     n = minimum(n,len(l))

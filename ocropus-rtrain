@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function
 import random as pyrandom
 import re
 from pylab import *
-import os.path
 import ocrolib
 import argparse
 import matplotlib

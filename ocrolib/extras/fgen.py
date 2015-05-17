@@ -4,12 +4,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-import ctypes
 import cairo
 from cairoextras import *
 from numpy import *
 from scipy import *
-from scipy.misc import imsave
 from pylab import *
 import pango,pangocairo
 from scipy.ndimage.filters import gaussian_filter

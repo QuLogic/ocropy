@@ -7,7 +7,6 @@ from __future__ import absolute_import, division, print_function
 from numpy import *
 import pylab
 from scipy.ndimage import morphology,measurements,filters
-from scipy.ndimage.morphology import *
 
 from .toplevel import *
 
